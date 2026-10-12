@@ -12,3 +12,4 @@ tools/new/nova/_wf/
 .env.*
 *.pem
 *.key
+.vercel/

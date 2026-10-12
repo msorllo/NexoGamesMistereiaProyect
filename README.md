@@ -4,7 +4,7 @@
 
 NEXO es un lanzador con estética de sistema operativo que reúne **30 apps y juegos web independientes**: juegos 3D, estudios creativos, bienestar, productividad y retos mentales. Todas comparten **XP, niveles, logros y retos diarios**.
 
-**Jugar ahora:** https://msorllo.github.io/NexoGamesMistereiaProyect/
+**Jugar ahora:** https://nexo-games-mistereia.vercel.app/
 
 ## Qué incluye
 
@@ -54,7 +54,7 @@ cd site && python -m http.server 8000   # probar en http://localhost:8000
 
 ## Publicación
 
-`site/` es estático: se sirve tal cual en GitHub Pages, Cloudflare Pages, Netlify o Vercel. En GitHub Pages se publica desde la rama `gh-pages` (contiene solo el contenido de `site/`).
+`site/` es estático y se publica en Vercel (`cd site && npx vercel deploy --prod`; incluye `vercel.json` con caché y cabeceras). Sirve igual en Cloudflare Pages, Netlify o GitHub Pages. Brotli deja el lanzador en ~90 KB y la app más pesada (Quilate) en ~410 KB.
 
 ## Créditos y licencias
 
