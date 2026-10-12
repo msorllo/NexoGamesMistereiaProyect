@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="es" data-app="bauhaus">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cerebro Bauhaus</title>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=Outfit:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#efece4;--red:#e63022;--yel:#f4c20d;--blue:#1f4fa8;--blk:#151515;--gry:#d8d3c6}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--paper);color:var(--blk);font-family:'Outfit',system-ui,sans-serif}
+.app{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:20px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:22px;min-height:100vh;align-items:stretch}
+.art{position:relative;background:var(--blk);min-height:420px;overflow:hidden}
+.art .shape{position:absolute;transition:all .8s cubic-bezier(.7,0,.2,1)}
+.art h1{position:absolute;left:24px;bottom:18px;margin:0;font-family:'Big Shoulders Display',sans-serif;font-weight:900;font-size:clamp(48px,7vw,96px);line-height:.82;color:var(--paper);text-transform:uppercase;letter-spacing:-.01em;z-index:2}
+.art .rank{position:absolute;top:18px;left:24px;right:24px;display:flex;justify-content:space-between;color:var(--paper);font-size:12px;letter-spacing:.18em;text-transform:uppercase;z-index:2}
+.art .rank b{font-family:'Big Shoulders Display',Impact,'Arial Narrow',system-ui,sans-serif;font-size:24px;letter-spacing:.02em;display:block;color:var(--yel)}
+.main{display:flex;flex-direction:column;gap:16px}
+.top{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch}
+.kpi{border:3px solid var(--blk);padding:8px 14px;background:var(--paper);min-width:92px}
+.kpi small{font-size:11px;letter-spacing:.14em;text-transform:uppercase}
+.kpi b{display:block;font-family:'Big Shoulders Display',Impact,'Arial Narrow',system-ui,sans-serif;font-weight:800;font-size:32px;line-height:1;font-variant-numeric:tabular-nums}
+.kpi.red{background:var(--red);color:var(--paper)}.kpi.yel{background:var(--yel)}.kpi.blue{background:var(--blue);color:var(--paper)}
+.timer{height:14px;border:3px solid var(--blk);background:var(--paper)}.timer i{display:block;height:100%;background:var(--blk);transition:width .1s linear}
+.q{font-family:'Big Shoulders Display',Impact,'Arial Narrow',system-ui,sans-serif;font-weight:800;font-size:clamp(30px,4vw,48px);line-height:1;margin:6px 0 0;text-transform:uppercase;text-wrap:balance}
+.cat{display:inline-flex;align-items:center;gap:8px;font-size:12px;letter-spacing:.2em;text-transform:uppercase;font-weight:700}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opt{border:3px solid var(--blk);background:var(--paper);padding:16px 14px;font:inherit;font-size:18px;font-weight:500;text-align:left;cursor:pointer;display:flex;align-items:center;gap:12px;color:var(--blk);transition:transform .1s,background .15s}
+.opt:hover{transform:translate(-3px,-3px);box-shadow:3px 3px 0 var(--blk)}
+.opt .ic{width:26px;height:26px;flex:none}
+.opt.ok{background:var(--blue);color:var(--paper)}.opt.ko{background:var(--red);color:var(--paper)}.opt.gone{opacity:.15;pointer-events:none}
+.opt:disabled{cursor:default}
+.opt:focus-visible,.life:focus-visible,.big:focus-visible,.catb:focus-visible{outline:3px solid var(--yel);outline-offset:3px}
+.lifes{display:flex;gap:8px;flex-wrap:wrap}
+.life{border:3px solid var(--blk);background:var(--yel);font:inherit;font-weight:700;padding:8px 12px;cursor:pointer;font-size:14px;color:var(--blk)}
+.life:disabled{opacity:.25;cursor:not-allowed}
+.big{border:0;background:var(--red);color:var(--paper);font-family:'Big Shoulders Display',Impact,'Arial Narrow',system-ui,sans-serif;font-weight:900;font-size:30px;padding:12px 26px;cursor:pointer;text-transform:uppercase;letter-spacing:.02em}
+.feed{font-size:15px;min-height:22px}
+.menu h2{font-family:'Big Shoulders Display',Impact,'Arial Narrow',system-ui,sans-serif;font-weight:900;font-size:clamp(40px,5vw,64px);line-height:.9;margin:0;text-transform:uppercase}
+.menu p{font-size:16px;line-height:1.5;max-width:52ch;margin:8px 0}
+.cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:12px 0}
+.catb{border:3px solid var(--blk);background:var(--paper);padding:14px;font:inherit;font-weight:700;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:10px;color:var(--blk)}
+.catb.on{background:var(--blk);color:var(--paper)}
+.catb svg{width:34px;height:34px}
+.ms{display:grid;gap:6px;font-size:14px;margin-top:6px}
+.ms div{display:flex;gap:10px;align-items:center}
+.ms i{width:14px;height:14px;border:3px solid var(--blk);flex:none}.ms .ok i{background:var(--blue)}
+.ladder{display:flex;gap:4px;margin-top:10px}
+.ladder span{flex:1;height:10px;background:var(--gry)}.ladder span.on{background:var(--red)}
+[hidden]{display:none!important}
+@media (max-width:860px){.app{grid-template-columns:1fr}.art{min-height:240px}.opts{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="art" id="art">
+    <div class="rank"><span>Rango<b id="rank">Aprendiz</b></span><span style="text-align:right">Puntos totales<b id="tot">0</b></span></div>
+    <div class="shape" id="s1"></div><div class="shape" id="s2"></div><div class="shape" id="s3"></div><div class="shape" id="s4"></div>
+    <h1>Cerebro<br>Bauhaus</h1>
+  </div>
+  <div class="main">
+    <section class="menu" id="menu">
+      <h2>Forma sigue<br>a función.</h2>
+      <p>Diez preguntas, quince segundos cada una. Las respuestas rápidas puntúan más y las rachas multiplican. Tienes tres comodines por partida.</p>
+      <div class="cats" id="cats"></div>
+      <button class="big" id="start">Empezar ronda</button>
+      <div class="ladder" id="ladder"></div>
+      <div class="ms" id="ms"></div>
+    </section>
+    <section id="game" hidden style="display:flex;flex-direction:column;gap:14px">
+      <div class="top"><div class="kpi"><small>Pregunta</small><b id="qn">1/10</b></div><div class="kpi yel"><small>Puntos</small><b id="pts">0</b></div><div class="kpi red"><small>Racha</small><b id="str">0</b></div><div class="kpi blue"><small>Multiplic.</small><b id="mul">×1</b></div></div>
+      <div class="timer"><i id="tbar"></i></div>
+      <div><div class="cat" id="cat"></div><h2 class="q" id="q"></h2></div>
+      <div class="opts" id="opts"></div>
+      <div class="lifes"><button class="life" id="l50">50 / 50</button><button class="life" id="lt">+10 segundos</button><button class="life" id="ls">Saltar</button></div>
+      <div class="feed" id="feed"></div>
+    </section>
+  </div>
+</div>
+<script>
+const SH={c:(c)=>`<svg viewBox="0 0 30 30" class="ic"><circle cx="15" cy="15" r="13" fill="${c}"/></svg>`,s:(c)=>`<svg viewBox="0 0 30 30" class="ic"><rect x="3" y="3" width="24" height="24" fill="${c}"/></svg>`,t:(c)=>`<svg viewBox="0 0 30 30" class="ic"><path d="M15 2L28 28H2z" fill="${c}"/></svg>`,h:(c)=>`<svg viewBox="0 0 30 30" class="ic"><path d="M2 22a13 13 0 0 1 26 0z" fill="${c}"/></svg>`};
+const CATS=[{id:'sci',n:'Ciencia',sh:'c',c:'#1f4fa8'},{id:'his',n:'Historia',sh:'s',c:'#e63022'},{id:'geo',n:'Geografía',sh:'t',c:'#f4c20d'},{id:'art',n:'Arte y cultura',sh:'h',c:'#151515'}];
+const Q={
+sci:[['¿Símbolo químico del oro?',['Au','Ag','Or','Go']],['¿Cuántos huesos tiene un adulto humano?',['206','186','256','212']],['¿El planeta más grande del sistema solar?',['Júpiter','Saturno','Neptuno','Tierra']],['¿Qué gas absorben las plantas en la fotosíntesis?',['Dióxido de carbono','Oxígeno','Nitrógeno','Helio']],['Velocidad aproximada de la luz',['300.000 km/s','30.000 km/s','3.000 km/s','3 millones km/s']],['¿Qué partícula tiene carga negativa?',['Electrón','Protón','Neutrón','Fotón']],['¿El órgano más grande del cuerpo?',['La piel','El hígado','El cerebro','Los pulmones']],['¿Qué metal es líquido a temperatura ambiente?',['Mercurio','Plomo','Aluminio','Zinc']],['¿Cuántos cromosomas tiene una célula humana típica?',['46','23','48','64']],['¿El elemento más abundante del universo?',['Hidrógeno','Helio','Oxígeno','Carbono']],['¿Quién formuló la teoría de la relatividad?',['Albert Einstein','Isaac Newton','Niels Bohr','Marie Curie']],['¿A qué temperatura hierve el agua a nivel del mar?',['100 °C','90 °C','120 °C','80 °C']]],
+his:[['¿En qué año llegó Colón a América?',['1492','1512','1488','1500']],['¿Qué muro cayó en 1989?',['El de Berlín','La Gran Muralla','El de Adriano','El de las Lamentaciones']],['¿Primera persona en pisar la Luna?',['Neil Armstrong','Yuri Gagarin','Buzz Aldrin','Michael Collins']],['¿Qué civilización construyó Machu Picchu?',['Inca','Maya','Mexica','Olmeca']],['¿En qué año terminó la Segunda Guerra Mundial?',['1945','1939','1944','1950']],['¿Qué escuela de diseño fundó Walter Gropius en 1919?',['Bauhaus','De Stijl','Art Nouveau','Vkhutemas']],['¿Primer emperador romano?',['Augusto','Julio César','Nerón','Trajano']],['¿Año de la Constitución española vigente?',['1978','1975','1982','1931']],['¿Capital del imperio mexica?',['Tenochtitlan','Cuzco','Tikal','Teotihuacan']],['¿Qué se atribuye a Gutenberg?',['La imprenta de tipos móviles','El telescopio','La brújula','El papel']],['¿De qué reino fue reina Cleopatra?',['Egipto','Persia','Grecia','Cartago']],['¿En qué año comenzó la Revolución francesa?',['1789','1799','1776','1815']]],
+geo:[['¿El río más largo de la península ibérica?',['Tajo','Ebro','Duero','Guadalquivir']],['¿Capital de Australia?',['Canberra','Sídney','Melbourne','Perth']],['¿La montaña más alta del mundo?',['Everest','K2','Aconcagua','Kilimanjaro']],['¿El océano más grande?',['Pacífico','Atlántico','Índico','Ártico']],['¿País más poblado del mundo hoy?',['India','China','Estados Unidos','Indonesia']],['¿En qué continente está Marruecos?',['África','Europa','Asia','Oriente Medio']],['¿Capital de Canadá?',['Ottawa','Toronto','Montreal','Vancouver']],['¿El desierto cálido más grande?',['Sahara','Gobi','Kalahari','Atacama']],['¿Qué país tiene forma de bota?',['Italia','Grecia','Chile','Portugal']],['¿Cuántas comunidades autónomas tiene España?',['17','15','19','16']],['¿Qué mar separa Europa de África?',['Mediterráneo','Rojo','Negro','Caspio']],['¿Capital de Japón?',['Tokio','Kioto','Osaka','Seúl']]],
+art:[['¿Quién pintó el Guernica?',['Picasso','Miró','Dalí','Goya']],['¿Quién escribió Don Quijote?',['Cervantes','Lope de Vega','Quevedo','Góngora']],['¿Qué pintor se cortó parte de la oreja?',['Van Gogh','Monet','Gauguin','Cézanne']],['¿Quién diseñó la Sagrada Familia?',['Gaudí','Domènech i Montaner','Calatrava','Puig i Cadafalch']],['¿En qué museo están Las Meninas?',['Museo del Prado','Reina Sofía','Thyssen','Louvre']],['¿Quién compuso Las cuatro estaciones?',['Vivaldi','Bach','Mozart','Beethoven']],['¿Cuántas cuerdas tiene una guitarra española estándar?',['6','4','8','12']],['¿Autor de Cien años de soledad?',['García Márquez','Vargas Llosa','Cortázar','Borges']],['¿Pintor famoso por los relojes blandos?',['Dalí','Magritte','Picasso','Kandinsky']],['¿Quién pintó La Gioconda?',['Leonardo da Vinci','Miguel Ángel','Rafael','Botticelli']],['¿En qué ciudad está la Alhambra?',['Granada','Córdoba','Sevilla','Toledo']],['¿Qué pintor de la Bauhaus teorizó sobre forma y color en "Punto y línea sobre el plano"?',['Kandinsky','Mondrian','Klee','Malévich']]]};
+const RANKS=[[0,'Aprendiz'],[800,'Oficial'],[2500,'Maestro de taller'],[6000,'Genio Bauhaus']];
+let total=OS.load('total',0),played=OS.load('played',{}),msd=OS.load('ms',{}),selCat='mix';
+const MS=[{id:'perfect',t:'Ronda perfecta: 10 de 10',xp:80},{id:'fast',t:'5 respuestas en menos de 3 segundos',xp:40},{id:'all',t:'Juega las cuatro categorías',xp:40},{id:'str7',t:'Racha de 7 aciertos',xp:50}];
+let round,idx,pts,streak,best,fastN,T,tmax,timer,lifes,answered;
+function rank(){let r=RANKS[0];for(const x of RANKS)if(total>=x[0])r=x;return r}
+function art(mode){const [a,b,c,d]=['s1','s2','s3','s4'].map(i=>document.getElementById(i));const A=document.getElementById('art');const w=A.clientWidth,h=A.clientHeight;const r=Math.random;
+ const L=[()=>{a.style.cssText=`left:${w*.45}px;top:${h*.08}px;width:${w*.5}px;height:${w*.5}px;border-radius:50%;background:#e63022`;b.style.cssText=`left:${w*.06}px;top:${h*.2}px;width:${w*.36}px;height:${w*.36}px;background:#f4c20d`;c.style.cssText=`left:${w*.2}px;top:${h*.48}px;width:0;height:0;border-left:${w*.2}px solid transparent;border-right:${w*.2}px solid transparent;border-bottom:${w*.34}px solid #1f4fa8`;d.style.cssText=`left:0;top:${h*.62}px;width:${w}px;height:10px;background:#efece4`},
+ ()=>{a.style.cssText=`left:${w*.1}px;top:${h*.1}px;width:${w*.7}px;height:${w*.7}px;border-radius:50%;background:#1f4fa8`;b.style.cssText=`left:${w*.55}px;top:${h*.35}px;width:${w*.4}px;height:${h*.5}px;background:#e63022`;c.style.cssText=`left:${w*.05}px;top:${h*.55}px;width:0;height:0;border-left:${w*.16}px solid transparent;border-right:${w*.16}px solid transparent;border-bottom:${w*.26}px solid #f4c20d`;d.style.cssText=`left:${w*.5}px;top:0;width:10px;height:${h}px;background:#efece4`},
+ ()=>{a.style.cssText=`left:${w*.3}px;top:${h*.3}px;width:${w*.6}px;height:${w*.3}px;border-radius:${w*.3}px ${w*.3}px 0 0;background:#f4c20d`;b.style.cssText=`left:${w*.08}px;top:${h*.08}px;width:${w*.25}px;height:${w*.25}px;border-radius:50%;background:#efece4`;c.style.cssText=`left:${w*.6}px;top:${h*.05}px;width:${w*.3}px;height:${w*.3}px;background:#1f4fa8;transform:rotate(12deg)`;d.style.cssText=`left:${w*.1}px;top:${h*.58}px;width:${w*.8}px;height:${h*.08}px;background:#e63022`}];
+ L[(mode??(Math.random()*3|0))%3]()}
+function renderMenu(){document.getElementById('cats').innerHTML=[{id:'mix',n:'Mezcla',sh:'c',c:'#e63022'},...CATS].map(c=>`<button class="catb ${selCat===c.id?'on':''}" data-c="${c.id}">${c.id==='mix'?`<svg viewBox="0 0 30 30"><circle cx="9" cy="9" r="7" fill="#e63022"/><rect x="16" y="2" width="12" height="12" fill="#1f4fa8"/><path d="M9 16l7 12H2z" fill="#f4c20d"/><path d="M16 26a6 6 0 0 1 12 0z" fill="#efece4" stroke="#151515"/></svg>`:SH[c.sh](c.c).replace('class="ic"','')}${c.n}</button>`).join('');
+ document.querySelectorAll('.catb').forEach(b=>b.onclick=()=>{selCat=b.dataset.c;renderMenu()});
+ const r=rank();document.getElementById('rank').textContent=r[1];document.getElementById('tot').textContent=total.toLocaleString('es');document.getElementById('ladder').innerHTML=RANKS.map(x=>`<span class="${total>=x[0]?'on':''}" title="${x[1]} (${x[0]})"></span>`).join('');
+ document.getElementById('ms').innerHTML='<b style="margin-top:10px">Misiones</b>'+MS.map(m=>`<div class="${msd[m.id]?'ok':''}"><i></i>${m.t} · +${m.xp} XP</div>`).join('')}
+function build(){let pool=[];const cs=selCat==='mix'?CATS.map(c=>c.id):[selCat];cs.forEach(c=>Q[c].forEach(q=>pool.push({c,q:q[0],a:q[1]})));pool.sort(()=>Math.random()-.5);return pool.slice(0,10)}
+document.getElementById('start').onclick=()=>{round=build();idx=0;pts=0;streak=0;best=0;fastN=0;answered=0;lifes={f:1,t:1,s:1};played[selCat]=1;OS.save('played',played);document.getElementById('menu').hidden=true;document.getElementById('game').hidden=false;show()};
+function show(){const it=round[idx];const cat=CATS.find(c=>c.id===it.c);art(idx);document.getElementById('qn').textContent=(idx+1)+'/10';document.getElementById('cat').innerHTML=SH[cat.sh](cat.c)+cat.n;document.getElementById('q').textContent=it.q;
+ const opts=it.a.map((t,i)=>({t,ok:i===0})).sort(()=>Math.random()-.5);const shapes=['c','s','t','h'],cols=['#e63022','#1f4fa8','#f4c20d','#151515'];
+ document.getElementById('opts').innerHTML=opts.map((o,i)=>`<button class="opt" data-ok="${o.ok?1:0}">${SH[shapes[i]](cols[i])}<span>${o.t}</span></button>`).join('');
+ document.querySelectorAll('.opt').forEach(b=>b.onclick=()=>answer(b));['l50','lt','ls'].forEach((id,i)=>document.getElementById(id).disabled=!lifes['fts'[i]]);
+ document.getElementById('feed').textContent='';tmax=15;T=15;clearInterval(timer);timer=setInterval(()=>{T-=.1;document.getElementById('tbar').style.width=Math.max(0,T/tmax*100)+'%';if(T<=0){answer(null)}},100);upd()}
+function answer(b){clearInterval(timer);const all=[...document.querySelectorAll('.opt')];if(all.some(x=>x.disabled))return;all.forEach(x=>{x.disabled=true;if(x.dataset.ok==='1')x.classList.add('ok')});const took=15-T;
+ if(b&&b.dataset.ok==='1'){streak++;best=Math.max(best,streak);answered++;const mul=Math.min(4,1+Math.floor(streak/3));const g=Math.round((100+Math.max(0,T)*10)*mul);pts+=g;if(took<3)fastN++;document.getElementById('feed').innerHTML=`<b>Correcto.</b> +${g} puntos${took<3?' · ¡relámpago!':''}`;tone(660);setTimeout(()=>tone(880),90)}
+ else{if(b)b.classList.add('ko');streak=0;document.getElementById('feed').innerHTML=b?'<b>No.</b> La respuesta correcta está en azul.':'<b>Tiempo.</b>';tone(160,'square')}
+ upd();setTimeout(next,1500)}
+function next(){idx++;if(idx>=10)return end();show()}
+function upd(){document.getElementById('pts').textContent=pts;document.getElementById('str').textContent=streak;document.getElementById('mul').textContent='×'+Math.min(4,1+Math.floor(streak/3))}
+document.getElementById('l50').onclick=()=>{lifes.f=0;document.getElementById('l50').disabled=true;[...document.querySelectorAll('.opt[data-ok="0"]')].sort(()=>Math.random()-.5).slice(0,2).forEach(b=>b.classList.add('gone'))};
+document.getElementById('lt').onclick=()=>{lifes.t=0;document.getElementById('lt').disabled=true;T+=10;tmax+=10};
+document.getElementById('ls').onclick=()=>{lifes.s=0;clearInterval(timer);answered++;next()};
+function end(){total+=pts;OS.save('total',total);const before=rank();OS.xp(Math.round(pts/50)+answered*3,'Ronda de Cerebro Bauhaus');
+ const chk={perfect:answered===10&&best===10,fast:fastN>=5,all:CATS.every(c=>played[c.id]),str7:best>=7};MS.forEach(m=>{if(!msd[m.id]&&chk[m.id]){msd[m.id]=1;OS.xp(m.xp,m.t)}});OS.save('ms',msd);
+ if(rank()[1]==='Genio Bauhaus')OS.achieve('bau_genio','Genio Bauhaus','Alcanzaste el rango máximo');
+ document.getElementById('game').hidden=true;document.getElementById('menu').hidden=false;document.querySelector('.menu h2').innerHTML=`${pts} puntos.<br>${answered>=8?'Magistral.':answered>=5?'Buen oficio.':'A repasar.'}`;document.querySelector('.menu p').textContent=`Acertaste ${answered} de 10, con una racha máxima de ${best}. Tu total sube a ${total.toLocaleString('es')} puntos.`;document.getElementById('start').textContent='Otra ronda';renderMenu();art()}
+let ac;function tone(f,t='triangle'){try{ac=ac||new AudioContext();const o=ac.createOscillator(),g=ac.createGain();o.type=t;o.frequency.value=f;g.gain.value=.05;g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+.18);o.connect(g).connect(ac.destination);o.start();o.stop(ac.currentTime+.18)}catch(e){}}
+addEventListener('keydown',e=>{if(document.getElementById('game').hidden)return;const n=+e.key;if(n>=1&&n<=4){const b=document.querySelectorAll('.opt')[n-1];if(b&&!b.disabled)b.click()}});
+addEventListener('resize',()=>art(0));
+renderMenu();art(0);
+</script>
+</body>
+</html>

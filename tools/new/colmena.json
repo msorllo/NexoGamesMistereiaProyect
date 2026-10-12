@@ -1,0 +1,32 @@
+{"manifest": {"id": "colmena", "file": "28-colmena.html", "name": "Colmena", "cat": "3d juegos bienestar", "tag": "Tu colmena crece incluso cuando no miras", "bg": "#9fd3e6", "bg2": "#f6e7b0", "fg": "#2b1a05", "acc": "#f2a900", "font": "'Fraunces',Georgia,serif", "glb": "colmena"},
+ "appinfo": {
+  "concept": "Idle incremental en un diorama 3D: un colmenar sobre una loma flotante con campo de flores (margaritas, girasol, romero, lavanda, brezo y azahar, el guiño a Benicarló). Cientos de abejas vuelan entre flores y colmenas, el panal del marco crece celda a celda y se llena de miel translúcida. Luz de día real: la paleta del cielo cambia con la hora (mañana dorada, mediodía, tarde de miel, noche con luciérnagas).",
+  "tech": "Three.js r147 + modelos de Blender (b_colmena.py: colmena Langstroth, marco con lámina de cera, celda hexagonal y celda de miel, abeja < 800 tris con alas aparte, seis flores, naranjo, tarro, caja, ahumador, apicultor, loma flotante con faldón de tierra y roca, moneda, mariposa, valla, nube, hierba). Abejas con 2 InstancedMesh (cuerpo multimaterial + alas que aletean por escala) y trayectorias Bézier con ruido; hierba y flores instanciadas con balanceo de viento en el vertex shader (dirección coherente en mundo); miel MeshPhysicalMaterial con transmisión; cielo con shader de degradado y entorno PMREM generado del propio cielo; sombras suaves que solo se recalculan cuando algo cambia; economía pura aislada en el bloque ECO (sanear estado, costes 1,12–40^n, ganancias offline, prestigio) que se puede simular en Node.",
+  "mechanics": [
+   "Néctar -> miel -> monedas: las abejas traen néctar, las colmenas y el panal lo procesan; si un lado va corto se marca el cuello de botella",
+   "Toca una colmena, el tarro o el botón Cosechar para vender la miel (8 % de cosecha dorada ×3)",
+   "Toca un macizo de flores: las abejas cercanas vuelan a él y todo produce ×3 durante 10 s (recarga 20 s)",
+   "Siete mejoras con coste exponencial y compra ×1 / ×10 / Máx: abejas, colmenas (caen y rebotan), panal extra (celdas nuevas en el marco), seis flores con su miel, apicultor con ahumador (cosecha solo), reina seleccionada (×2) y puesto en el mercado (precio ×1,4)",
+   "Mariposa dorada cada 1–3 min: frenesí ×5, monedas, enjambre errante o, rara vez, jalea real",
+   "Hitos: tres a la vez, primero una lista pensada para los 10 primeros minutos y luego procedurales",
+   "Tarro del día con racha de 7 días (el séptimo trae jalea real)",
+   "Ganancias sin conexión hasta 8 h con tarjeta de Recoger",
+   "Enjambrar (prestigio) al ganar 100 M en la temporada: jalea real = +10 % de producción por unidad, cinemática de enjambre en espiral",
+   "Colección de las seis mieles y estadísticas"
+  ],
+  "controls": "Ratón o dedo: arrastra para girar la loma, rueda o pellizco para acercar, toque/clic en colmenas, tarro, panal, flores y mariposas. Teclado: Espacio o Intro cosecha; los botones del panel son accesibles con Tab.",
+  "ideas": [
+   "Temporadas del año reales: en primavera florece el azahar con bonus x2, en verano el girasol, en otoño el brezo (p. ej. del 15 de marzo al 15 de abril, 'Semana del azahar de Benicarló')",
+   "Plagas y defensa: la avispa asiática aparece de vez en cuando y hay que tocarla antes de que robe miel (minijuego de reflejos de 10 s)",
+   "Reinas coleccionables con rasgos (italiana: +néctar, carniola: +proceso, negra ibérica: resiste frío) que se consiguen al enjambrar",
+   "Mercado dinámico: el precio de cada miel sube y baja durante el día y conviene vender en el pico (gráfica en el puesto)",
+   "Decoración del colmenar con monedas: caminos de piedra, farolillos que se encienden de noche, bebedero con agua animada",
+   "Ranking semanal de miel producida entre amigos (Supabase) y visitas a la loma de otros jugadores",
+   "Recetas: combinar mieles para crear productos (turrón, hidromiel, jabón) que se venden mucho más caros",
+   "Logros de temporada y un álbum de abejas: fotografiar con la cámara 3D a las abejas raras (abeja albina 1/500)",
+   "Versión de marca para una miel local real: código QR del tarro que desbloquea una miel de la colección y un descuento",
+   "Modo relajación: música generativa de zumbidos y campanas que suena según las flores del campo"
+  ]
+ },
+ "actions": [["wait", 2500], ["js", "H.skip()"], ["wait", 800], ["click", "#harvest"], ["wait", 500], ["js", "H.add(5000)"], ["click", "#u-bee"], ["click", "#u-hive"], ["wait", 800], ["js", "H.buy('flower')"], ["js", "H.boost(0)"], ["js", "H.butterfly(30);H.catchB()"], ["js", "H.view('mis')"], ["wait", 600], ["js", "H.view('col')"], ["wait", 600], ["js", "H.tick(60);H.state()"], ["wait", 800]]
+}

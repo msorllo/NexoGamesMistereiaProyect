@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="es" data-app="faro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Faro</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Nunito+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--night:#0b1a33;--deep:#06101f;--gold:#ffd35a;--foam:#e8f4ff;--red:#d7263d;--mut:#8ea3c4}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--night);color:var(--foam);font-family:'Nunito Sans',system-ui,sans-serif;overflow:hidden}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.top{position:fixed;top:0;left:0;right:0;padding:16px 18px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;pointer-events:none;flex-wrap:wrap}
+h1{font-family:'DM Serif Display',Georgia,serif;font-weight:400;font-size:clamp(34px,5vw,54px);margin:0;line-height:.9;text-shadow:0 0 30px rgba(255,211,90,.35)}
+h1 i{color:var(--gold)}
+.sub{font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--mut);margin-top:6px}
+.lvls{display:flex;gap:6px;pointer-events:auto;flex-wrap:wrap;justify-content:flex-end;max-width:420px}
+.lv{width:44px;height:50px;border-radius:12px;border:1px solid rgba(232,244,255,.18);background:rgba(6,16,31,.6);color:var(--foam);font:inherit;font-weight:800;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;backdrop-filter:blur(6px)}
+.lv small{font-size:9px;color:var(--gold);letter-spacing:1px;height:10px}
+.lv.on{background:var(--gold);color:var(--night);border-color:var(--gold)}.lv.on small{color:var(--night)}
+.lv:disabled{opacity:.3;cursor:not-allowed}
+.lv:focus-visible,.btn:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.bottom{position:fixed;left:0;right:0;bottom:0;padding:16px 18px;display:flex;justify-content:space-between;align-items:flex-end;gap:12px;pointer-events:none;flex-wrap:wrap}
+.panel{background:rgba(6,16,31,.7);border:1px solid rgba(232,244,255,.14);border-radius:18px;padding:12px 16px;backdrop-filter:blur(8px);pointer-events:auto}
+.stats{display:flex;gap:20px}
+.stats div{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
+.stats b{display:block;font-family:'DM Serif Display',serif;font-weight:400;font-size:30px;color:var(--foam);letter-spacing:0;font-variant-numeric:tabular-nums;line-height:1.1}
+.stats b.g{color:var(--gold)}
+.hint{font-size:14px;max-width:360px;line-height:1.4;color:#c9d6ec}
+.hint b{color:var(--gold)}
+.acts{display:flex;gap:8px}
+.btn{font:inherit;font-weight:800;font-size:14px;border:0;border-radius:12px;padding:11px 16px;cursor:pointer;background:rgba(232,244,255,.12);color:var(--foam)}
+.btn.pri{background:var(--gold);color:var(--night)}
+.win{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0;transition:opacity .5s}
+.win.on{opacity:1;pointer-events:auto}
+.card{background:rgba(6,16,31,.88);border:1px solid rgba(255,211,90,.4);border-radius:26px;padding:26px 30px;text-align:center;box-shadow:0 0 80px rgba(255,211,90,.25);max-width:340px;margin:16px}
+.card h2{font-family:'DM Serif Display',serif;font-weight:400;font-size:40px;margin:0}
+.card .st{font-size:34px;color:var(--gold);letter-spacing:8px;margin:6px 0}
+.card p{color:#c9d6ec;margin:0 0 16px}
+.load{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-family:'DM Serif Display',serif;font-size:22px;color:var(--mut)}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="load" id="load">Encendiendo el faro…</div>
+<div class="top"><div><h1>Fa<i>ro</i></h1><div class="sub">Guía la luz hasta cada barco</div></div><div class="lvls" id="lvls"></div></div>
+<div class="bottom">
+  <div class="panel hint" id="hint">Toca los <b>espejos</b> para girarlos. El haz debe iluminar <b>todos los barcos</b> antes del amanecer. Las rocas bloquean la luz.</div>
+  <div class="panel" style="display:flex;gap:16px;align-items:center;flex-wrap:wrap"><div class="stats"><div>Giros<b id="mv">0</b></div><div>Objetivo<b class="g" id="par">0</b></div><div>Barcos<b id="bt">0/0</b></div></div><div class="acts"><button class="btn" id="reset">Reiniciar</button></div></div>
+</div>
+<div class="win" id="win"><div class="card"><h2 id="wt">¡Puerto seguro!</h2><div class="st" id="ws">★★★</div><p id="wp"></p><button class="btn pri" id="next">Siguiente noche</button></div></div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script>const GLB="__GLB__";</script>
+<script>
+function b64(s){const b=atob(s),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a.buffer}
+const LIB={};let renderer,scene,camera,controls,water,clock=new THREE.Clock();
+const LV=8;let level=0,stars=OS.load('stars',{}),unl=OS.load('unl',1),G,moves=0,won=false,beamGroup,objs=[];
+function rng(seed){let s=seed>>>0||1;return()=>{s=(s+0x6D2B79F5)|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const refl=(d,s)=>s===0?[-d[1],-d[0]]:[d[1],d[0]];
+function gen(L){const N=[5,5,6,6,7,7,8,8][L],B=[1,1,2,2,2,3,3,3][L],M=[2,3,3,4,5,5,6,7][L],R=[1,2,3,3,4,5,6,7][L];
+ for(let seed=1;seed<5000;seed++){const r=rng(L*7919+seed*31);const cell=()=>Array.from({length:N},()=>Array(N).fill(0));const grid=cell();// 0 vacío 1 faro 2 espejo 3 roca 4 barco
+  const ly=1+Math.floor(r()*(N-2));const lh=[0,ly];grid[0][ly]=1;const path=[];const mir=[];let p=[0,ly],d=[1,0],ok=true;const vis=new Set(['0,'+ly]);
+  const inb=q=>q[0]>=0&&q[1]>=0&&q[0]<N&&q[1]<N;
+  for(let t=0;t<=M&&ok;t++){
+   if(t<M){const st=Math.floor(r()*(N-2));for(let k=0;k<st;k++){const q=[p[0]+d[0],p[1]+d[1]];if(!inb(q)||vis.has(q+'')){ok=false;break}vis.add(q+'');path.push(q);p=q}if(!ok)break;
+    const q=[p[0]+d[0],p[1]+d[1]];if(!inb(q)||vis.has(q+'')){ok=false;break}
+    const opts=[[d[1],d[0]],[-d[1],-d[0]]].filter(nd=>{const w=[q[0]+nd[0],q[1]+nd[1]];return inb(w)&&!vis.has(w+'')});if(!opts.length){ok=false;break}
+    const nd=opts[Math.floor(r()*opts.length)];const s=(refl(d,0)+'')===(nd+'')?0:1;vis.add(q+'');grid[q[0]][q[1]]=2;mir.push({x:q[0],y:q[1],sol:s});p=q;d=nd}
+   else{for(let k=0;k<50;k++){const q=[p[0]+d[0],p[1]+d[1]];if(!inb(q))break;if(vis.has(q+'')){ok=false;break}vis.add(q+'');path.push(q);p=q}}}
+  if(!ok||mir.length!==M||path.length<B+2)continue;
+  const cand=path.filter(c=>grid[c[0]][c[1]]===0);const boats=[];for(let i=0;i<B;i++){const idx=Math.floor(cand.length*(0.35+0.65*(i+1)/B))-1-Math.floor(r()*2);const c=cand.splice(Math.max(0,Math.min(cand.length-1,idx)),1)[0];if(!c)break;grid[c[0]][c[1]]=4;boats.push({x:c[0],y:c[1]})}
+  if(boats.length<B)continue;
+  const free=[];for(let x=0;x<N;x++)for(let y=0;y<N;y++)if(grid[x][y]===0&&!vis.has(x+','+y))free.push([x,y]);const rocks=[];for(let i=0;i<R&&free.length;i++){const c=free.splice(Math.floor(r()*free.length),1)[0];grid[c[0]][c[1]]=3;rocks.push({x:c[0],y:c[1]})}
+  const init=mir.map(m=>r()<.6?1-m.sol:m.sol);if(init.every((s,i)=>s===mir[i].sol))init[0]=1-init[0];
+  const lv={N,lh,grid,mir,boats,rocks,init};if(trace(lv,mir.map(m=>m.sol)).lit.size!==B)continue;if(trace(lv,init).lit.size===B)continue;
+  lv.par=init.filter((s,i)=>s!==mir[i].sol).length;return lv}
+}
+function trace(lv,st){const pts=[[lv.lh[0],lv.lh[1]]];let p=[...lv.lh],d=[1,0];const lit=new Set();for(let n=0;n<300;n++){const q=[p[0]+d[0],p[1]+d[1]];if(q[0]<0||q[1]<0||q[0]>=lv.N||q[1]>=lv.N){pts.push([q[0]-d[0]*.5,q[1]-d[1]*.5]);break}const g=lv.grid[q[0]][q[1]];p=q;
+  if(g===3){pts.push([q[0]-d[0]*.35,q[1]-d[1]*.35]);break}if(g===4)lit.add(q+'');if(g===2){const i=lv.mir.findIndex(m=>m.x===q[0]&&m.y===q[1]);pts.push(q);d=refl(d,st[i])}}
+ return{pts,lit}}
+function W(x,y){const h=(G.N-1)/2;return new THREE.Vector3(x-h,0,y-h)}
+function get(n){return LIB[n].clone(true)}
+function setup(){renderer=new THREE.WebGLRenderer({canvas:document.getElementById('c'),antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.95;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+ scene=new THREE.Scene();scene.background=new THREE.Color('#0b1a33');scene.fog=new THREE.Fog('#0b1a33',14,34);
+ camera=new THREE.PerspectiveCamera(45,1,.1,200);controls=new THREE.OrbitControls(camera,renderer.domElement);controls.enablePan=false;controls.minPolarAngle=.45;controls.maxPolarAngle=1.25;controls.minDistance=6;controls.maxDistance=20;controls.enableDamping=true;
+ scene.add(new THREE.HemisphereLight('#5d78c0','#050c18',.45));const moon=new THREE.DirectionalLight('#b8c8ff',.7);moon.position.set(-6,12,-4);moon.castShadow=true;moon.shadow.mapSize.set(1024,1024);Object.assign(moon.shadow.camera,{left:-8,right:8,top:8,bottom:-8});scene.add(moon);
+ const moonMesh=new THREE.Mesh(new THREE.SphereGeometry(1.2,24,16),new THREE.MeshBasicMaterial({color:'#fff4d6'}));moonMesh.position.set(-14,9,-22);scene.add(moonMesh);
+ const sg=new THREE.BufferGeometry();const sp=[];for(let i=0;i<700;i++){const a=Math.random()*Math.PI*2,e=Math.random()*.9+.08,r=60;sp.push(Math.cos(a)*Math.cos(e)*r,Math.sin(e)*r,Math.sin(a)*Math.cos(e)*r)}sg.setAttribute('position',new THREE.Float32BufferAttribute(sp,3));scene.add(new THREE.Points(sg,new THREE.PointsMaterial({color:'#ffffff',size:.18,fog:false})));
+ const wg=new THREE.PlaneGeometry(60,60,90,90);wg.rotateX(-Math.PI/2);water=new THREE.Mesh(wg,new THREE.MeshStandardMaterial({color:'#0a2440',roughness:.35,metalness:0,flatShading:true}));water.receiveShadow=true;water.position.y=-.05;scene.add(water);water.userData.base=wg.attributes.position.array.slice();
+ addEventListener('resize',resize);resize();
+ let down=null;renderer.domElement.addEventListener('pointerdown',e=>down=[e.clientX,e.clientY]);renderer.domElement.addEventListener('pointerup',e=>{if(!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>6)return;click(e)})}
+function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}
+const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();
+function click(e){if(won)return;mouse.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);ray.setFromCamera(mouse,camera);const hits=ray.intersectObjects(objs.filter(o=>o.userData.mir!=null),true);if(!hits.length)return;let o=hits[0].object;while(o&&o.userData.mir==null)o=o.parent;const i=o.userData.mir;G.state[i]=1-G.state[i];moves++;o.userData.target=G.state[i]?-Math.PI/4:Math.PI/4;tick();update()}
+let ac;function tick(){try{ac=ac||new AudioContext();const t=ac.currentTime,o=ac.createOscillator(),g=ac.createGain();o.type='triangle';o.frequency.setValueAtTime(520,t);o.frequency.exponentialRampToValueAtTime(880,t+.08);g.gain.setValueAtTime(.06,t);g.gain.exponentialRampToValueAtTime(.0001,t+.2);o.connect(g).connect(ac.destination);o.start();o.stop(t+.2)}catch(e){}}
+function bell(){try{ac=ac||new AudioContext();[392,523,659,784].forEach((f,i)=>{const t=ac.currentTime+i*.12,o=ac.createOscillator(),g=ac.createGain();o.frequency.value=f;g.gain.setValueAtTime(.07,t);g.gain.exponentialRampToValueAtTime(.0001,t+1.2);o.connect(g).connect(ac.destination);o.start(t);o.stop(t+1.3)})}catch(e){}}
+function build(L){level=L;won=false;moves=0;G=gen(L);G.state=[...G.init];objs.forEach(o=>scene.remove(o));objs=[];
+ const add=(o,x,y,rot=0,sc=1)=>{const p=W(x,y);o.position.copy(p);o.rotation.y=rot;o.scale.setScalar(sc);scene.add(o);objs.push(o);return o};
+ const lh=add(get('Faro'),G.lh[0],G.lh[1],Math.PI/2,.62);const isl=add(get('Casilla'),G.lh[0],G.lh[1],0,1.15);
+ G.lamp=new THREE.PointLight('#ffd35a',2.2,9,1.6);G.lamp.position.copy(W(G.lh[0],G.lh[1])).add(new THREE.Vector3(0,2.1,0));scene.add(G.lamp);objs.push(G.lamp);
+ G.mir.forEach((m,i)=>{add(get('Casilla'),m.x,m.y,0,.9);const e=add(get('Espejo'),m.x,m.y,G.state[i]?-Math.PI/4:Math.PI/4,.95);e.userData.mir=i;e.userData.target=e.rotation.y;e.position.y=.02;const ring=new THREE.Mesh(new THREE.TorusGeometry(.42,.025,6,32),new THREE.MeshBasicMaterial({color:'#ffd35a',transparent:true,opacity:.5}));ring.rotation.x=-Math.PI/2;ring.position.y=.04;e.add(ring)});
+ G.boatObjs=G.boats.map((b,i)=>{const o=add(get('Barco'),b.x,b.y,Math.random()*6,.95);o.userData.boat=b.x+','+b.y;o.userData.ph=Math.random()*6;o.traverse(m=>{if(m.isMesh&&m.material.name==='Farol barco'){m.material=m.material.clone();o.userData.lamp=m.material}});return o});
+ G.rocks.forEach(r=>add(get('Roca'),r.x,r.y,Math.random()*6,.95+Math.random()*.3));
+ for(let x=-1;x<=G.N;x++)for(let y=-1;y<=G.N;y++){if(x===-1||y===-1||x===G.N||y===G.N){if((x+y)%2===0)add(get('Boya'),x,y,0,.7)}}
+ beamGroup=new THREE.Group();scene.add(beamGroup);objs.push(beamGroup);
+ const c=W((G.N-1)/2,(G.N-1)/2);camera.position.set(c.x+G.N*.15,G.N*1.15+2,c.z+G.N*1.25+1.5);controls.target.set(c.x,0,c.z);controls.update();
+ lvls();update();document.getElementById('win').classList.remove('on')}
+const beamMat=new THREE.MeshBasicMaterial({color:'#ffc83a',transparent:true,opacity:.95,blending:THREE.AdditiveBlending,depthWrite:false});const glowMat=new THREE.MeshBasicMaterial({color:'#ff9f1a',transparent:true,opacity:.22,blending:THREE.AdditiveBlending,depthWrite:false});
+function update(){const {pts,lit}=trace(G,G.state);while(beamGroup.children.length)beamGroup.remove(beamGroup.children[0]);const H=.62;
+ for(let i=1;i<pts.length;i++){const a=W(...pts[i-1]).setY(H),b=W(...pts[i]).setY(H);const len=a.distanceTo(b);if(len<.01)continue;const mid=a.clone().add(b).multiplyScalar(.5);
+  for(const [r,m] of [[.045,beamMat],[.16,glowMat]]){const cy=new THREE.Mesh(new THREE.CylinderGeometry(r,r,len,10,1,true),m);cy.position.copy(mid);cy.lookAt(b);cy.rotateX(Math.PI/2);beamGroup.add(cy)}
+  const s=new THREE.Mesh(new THREE.SphereGeometry(.11,12,8),glowMat);s.position.copy(b);beamGroup.add(s)}
+ G.boatObjs.forEach(o=>{const on=lit.has(o.userData.boat);o.userData.lit=on;if(o.userData.lamp){o.userData.lamp.emissiveIntensity=on?14:1.2}});
+ document.getElementById('mv').textContent=moves;document.getElementById('par').textContent=G.par;document.getElementById('bt').textContent=lit.size+'/'+G.boats.length;
+ if(lit.size===G.boats.length&&!won){won=true;setTimeout(win,500)}}
+function win(){const st=moves<=G.par?3:moves<=G.par+2?2:1;stars[level]=Math.max(stars[level]||0,st);OS.save('stars',stars);if(level+2>unl&&level<LV-1){unl=level+2;OS.save('unl',unl)}bell();
+ OS.xp(20+level*8+st*6,'Noche '+(level+1)+' de Faro');OS.achieve('faro_1','Primera luz','Guiaste tu primer barco a puerto');if(Object.values(stars).filter(s=>s===3).length>=5)OS.achieve('faro_3s','Farero experto','5 noches con 3 estrellas');if(Object.keys(stars).length===LV)OS.achieve('faro_all','Guardián de la costa','Completaste las 8 noches de Faro');
+ document.getElementById('ws').textContent='★'.repeat(st)+'☆'.repeat(3-st);document.getElementById('wp').textContent=`${G.boats.length} ${G.boats.length>1?'barcos a salvo':'barco a salvo'} en ${moves} giros (objetivo ${G.par}).`;document.getElementById('next').textContent=level<LV-1?'Siguiente noche':'Volver a la primera';document.getElementById('win').classList.add('on');lvls()}
+document.getElementById('next').onclick=()=>build(level<LV-1?level+1:0);document.getElementById('reset').onclick=()=>build(level);
+function lvls(){document.getElementById('lvls').innerHTML=Array.from({length:LV},(_,i)=>`<button class="lv ${i===level?'on':''}" data-i="${i}" ${i>=unl?'disabled':''} aria-label="Noche ${i+1}">${i+1}<small>${stars[i]?'★'.repeat(stars[i]):''}</small></button>`).join('');document.querySelectorAll('.lv').forEach(b=>b.onclick=()=>build(+b.dataset.i))}
+function loop(){requestAnimationFrame(loop);const t=clock.getElapsedTime(),dt=Math.min(.05,clock.getDelta?0.016:0.016);
+ const pos=water.geometry.attributes.position,base=water.userData.base;for(let i=0;i<pos.count;i++){const x=base[i*3],z=base[i*3+2];pos.array[i*3+1]=Math.sin(x*.7+t*1.3)*.06+Math.cos(z*.9+t*1.1)*.05}pos.needsUpdate=true;if((t*60|0)%3===0)water.geometry.computeVertexNormals();
+ objs.forEach(o=>{if(o.userData.target!=null){o.rotation.y+=(o.userData.target-o.rotation.y)*.18}if(o.userData.boat){o.position.y=Math.sin(t*1.6+o.userData.ph)*.05-.02;o.rotation.z=Math.sin(t*1.2+o.userData.ph)*.06}});
+ if(G&&G.lamp)G.lamp.intensity=2+Math.sin(t*3)*.3;controls.update();renderer.render(scene,camera)}
+setup();new THREE.GLTFLoader().parse(b64(GLB),'',g=>{g.scene.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});[...g.scene.children].forEach(c=>LIB[c.name]=c);document.getElementById('load').remove();build(Math.min(unl-1,LV-1));loop()},e=>{document.getElementById('load').textContent='No se pudieron cargar los modelos 3D.'});
+</script>
+</body>
+</html>

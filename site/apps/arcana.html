@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="es" data-app="arcana">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Arcana</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+:root{--night:#0f1638;--deep:#080c24;--gold:#d9b46a;--gold2:#f2d99a;--crim:#8e2c3a;--parch:#efe3c8;--ink:#2a1f14;--haze:#8d93b8}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:radial-gradient(ellipse at 50% -10%,#24306b 0%,var(--night) 45%,var(--deep) 100%) fixed;color:var(--parch);font-family:'EB Garamond',Georgia,serif}
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(1px 1px at 20% 30%,#fff8,transparent),radial-gradient(1px 1px at 70% 20%,#fff6,transparent),radial-gradient(1.5px 1.5px at 40% 80%,#fff5,transparent),radial-gradient(1px 1px at 85% 65%,#fff7,transparent),radial-gradient(1px 1px at 10% 70%,#fff5,transparent);pointer-events:none}
+.wrap{max-width:1000px;margin:0 auto;padding-inline:16px;padding-block:22px;position:relative}
+header{text-align:center;margin-bottom:14px}
+h1{font-family:'Cinzel Decorative',serif;font-weight:700;font-size:clamp(40px,7vw,68px);margin:0;letter-spacing:.06em;background:linear-gradient(180deg,var(--gold2),var(--gold) 60%,#9a7334);-webkit-background-clip:text;background-clip:text;color:transparent}
+.orn{color:var(--gold);letter-spacing:.6em;font-size:12px;opacity:.7}
+.sub{font-style:italic;color:var(--haze);font-size:18px;margin-top:4px}
+.bar{display:flex;justify-content:center;gap:22px;flex-wrap:wrap;margin:14px 0;font-size:16px;color:var(--haze)}
+.bar b{color:var(--gold2);font-weight:500;font-size:22px;margin-left:4px;font-variant-numeric:tabular-nums}
+.tabs{display:flex;justify-content:center;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.tabs button{font-family:'Cinzel Decorative',Georgia,serif;font-size:13px;background:none;border:1px solid rgba(217,180,106,.35);color:var(--gold);padding:8px 14px;cursor:pointer;letter-spacing:.06em}
+.tabs button.on{background:var(--gold);color:var(--night)}
+.tabs button:disabled{opacity:.3;cursor:not-allowed}
+.tabs button:focus-visible,.card:focus-visible{outline:2px solid var(--gold2);outline-offset:3px}
+.board{display:grid;gap:10px;justify-content:center;perspective:1200px;margin:0 auto}
+.card{width:100%;aspect-ratio:2/3.2;position:relative;cursor:pointer;background:none;border:0;padding:0;transform-style:preserve-3d;transition:transform .55s cubic-bezier(.3,1.4,.5,1)}
+.card.flip,.card.match{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;border-radius:8px;overflow:hidden}
+.back{background:var(--crim);border:2px solid var(--gold);box-shadow:inset 0 0 0 5px var(--crim),inset 0 0 0 6px var(--gold);display:grid;place-items:center}
+.back svg{width:60%;opacity:.9}
+.front{transform:rotateY(180deg);background:linear-gradient(var(--parch),#e2d2ad);border:2px solid var(--gold);color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:8% 6%}
+.front .num{font-family:'Cinzel Decorative',Georgia,serif;font-size:clamp(10px,1.6vw,14px);color:var(--crim)}
+.front svg{width:66%;flex:1}
+.front .nm{font-family:'Cinzel Decorative',Georgia,serif;font-size:clamp(8px,1.3vw,12px);text-align:center;letter-spacing:.03em;line-height:1.1}
+.card.match .front{box-shadow:0 0 18px rgba(242,217,154,.7)}
+.card.match{animation:glow 1.2s ease}
+@keyframes glow{50%{filter:brightness(1.3)}}
+.over{position:fixed;inset:0;background:rgba(8,12,36,.85);display:flex;align-items:center;justify-content:center;z-index:9;padding:16px}
+.over[hidden]{display:none}
+.scroll{max-width:440px;text-align:center;background:linear-gradient(var(--parch),#e2d2ad);color:var(--ink);padding:28px;border:2px solid var(--gold);box-shadow:0 0 0 6px var(--night),0 0 0 7px var(--gold)}
+.scroll h2{font-family:'Cinzel Decorative',Georgia,serif;margin:0 0 6px;color:var(--crim);font-size:30px}
+.stars{font-size:36px;color:#b38a2e;letter-spacing:6px}
+.scroll p{font-size:18px;font-style:italic;margin:8px 0 16px}
+.scroll button{font-family:'Cinzel Decorative',Georgia,serif;background:var(--night);color:var(--gold2);border:0;padding:12px 24px;font-size:15px;cursor:pointer}
+.grim{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px}
+.gc{text-align:center;font-size:13px;color:var(--haze)}
+.gc .mini{aspect-ratio:2/3.2;border:1px solid rgba(217,180,106,.3);border-radius:6px;display:grid;place-items:center;margin-bottom:4px}
+.gc.have .mini{background:linear-gradient(var(--parch),#e2d2ad);border-color:var(--gold)}
+.gc.have{color:var(--gold2)}
+.gc .mini svg{width:60%}
+.omen{text-align:center;font-style:italic;color:var(--haze);min-height:28px;margin-top:16px;font-size:18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><div class="orn">✦ ✦ ✦</div><h1>Arcana</h1><div class="sub">Empareja los arcanos mayores y completa tu grimorio</div></header>
+  <div class="tabs" id="tabs"></div>
+  <div class="bar"><span>Movimientos<b id="moves">0</b></span><span>Parejas<b id="pairs">0/0</b></span><span>Tiempo<b id="time">0:00</b></span><span>Grimorio<b id="gr">0/22</b></span></div>
+  <div class="board" id="board"></div>
+  <div class="omen" id="omen"></div>
+  <section id="grimSec" hidden><div class="grim" id="grim"></div></section>
+</div>
+<div class="over" id="over" hidden><div class="scroll"><h2 id="oh">Lectura completa</h2><div class="stars" id="os">★★★</div><p id="op"></p><button id="ob">Siguiente tirada</button></div></div>
+<script>
+const G='stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"';
+const A=[
+ ['0','El Loco','<circle cx="30" cy="16" r="6"/><path d="M30 22v16l-8 14M30 38l9 13M18 30h24"/><circle cx="46" cy="50" r="3"/>','Un salto al vacío: empieza algo nuevo.'],
+ ['I','El Mago','<path d="M14 30c0-8 12-8 16 0s16 8 16 0-12-8-16 0-16 8-16 0z"/><path d="M30 38v16M24 54h12"/>','Tienes todas las herramientas. Úsalas.'],
+ ['II','La Sacerdotisa','<path d="M14 12v40M46 12v40"/><path d="M36 22a10 10 0 1 0 0 16 8 8 0 1 1 0-16z"/>','Escucha la intuición antes de decidir.'],
+ ['III','La Emperatriz','<circle cx="30" cy="22" r="11"/><path d="M30 33v20M22 45h16"/>','Lo que cuidas, florece.'],
+ ['IV','El Emperador','<rect x="16" y="16" width="28" height="28"/><path d="M30 8v44M8 30h44"/>','Estructura y disciplina ganan la partida.'],
+ ['V','El Hierofante','<path d="M30 8v46M20 16h20M16 26h28M20 36h20"/>','Aprende de quien ya recorrió el camino.'],
+ ['VI','Los Enamorados','<circle cx="23" cy="30" r="12"/><circle cx="37" cy="30" r="12"/>','Una elección hecha con el corazón.'],
+ ['VII','El Carro','<rect x="14" y="16" width="32" height="22"/><circle cx="18" cy="46" r="6"/><circle cx="42" cy="46" r="6"/>','Avanza con decisión: el movimiento es tuyo.'],
+ ['VIII','La Fuerza','<path d="M18 16c0-6 9-6 12 0s12 6 12 0-9-6-12 0-12 6-12 0z"/><circle cx="30" cy="38" r="12"/>','La calma es la fuerza más grande.'],
+ ['IX','El Ermitaño','<path d="M30 10l14 8v16l-14 8-14-8V18z"/><circle cx="30" cy="26" r="4"/><path d="M30 42v12"/>','Un paso atrás para ver con claridad.'],
+ ['X','La Rueda','<circle cx="30" cy="30" r="20"/><circle cx="30" cy="30" r="5"/><path d="M30 10v40M10 30h40M16 16l28 28M44 16L16 44"/>','La suerte gira. Prepárate para aprovecharla.'],
+ ['XI','La Justicia','<path d="M30 8v44M14 18h32M14 18l-6 14h12zM46 18l-6 14h12zM22 52h16"/>','Cada acción encuentra su equilibrio.'],
+ ['XII','El Colgado','<path d="M12 10h36M30 10v16"/><path d="M30 26l-10 20h20z"/>','Mira el problema desde otro ángulo.'],
+ ['XIII','La Muerte','<path d="M18 10h24L18 50h24z"/><path d="M22 18h16"/>','Algo termina para que otra cosa empiece.'],
+ ['XIV','La Templanza','<path d="M12 14l10 18 10-18zM28 30l10 18 10-18z"/><path d="M12 52c6-4 12 4 18 0s12 4 18 0"/>','Mezcla con paciencia: la dosis justa.'],
+ ['XV','El Diablo','<path d="M30 52L20 22l26 18H14l26-18z"/>','Revisa qué hábito te tiene atado.'],
+ ['XVI','La Torre','<path d="M20 54V20l10-10 10 10v34M16 54h28"/><path d="M42 8l-8 12h8l-8 12"/>','Un cambio brusco despeja el terreno.'],
+ ['XVII','La Estrella','<path d="M30 6l5 17 17 7-17 7-5 17-5-17-17-7 17-7z"/>','Esperanza renovada. Vas bien.'],
+ ['XVIII','La Luna','<path d="M38 10a20 20 0 1 0 0 40 16 16 0 1 1 0-40z"/>','No todo es lo que parece esta noche.'],
+ ['XIX','El Sol','<circle cx="30" cy="30" r="10"/><path d="M30 8v8M30 44v8M8 30h8M44 30h8M14 14l6 6M40 40l6 6M46 14l-6 6M20 40l-6 6"/>','Claridad, energía y un buen día por delante.'],
+ ['XX','El Juicio','<path d="M16 22l28-10v26L16 28z"/><path d="M10 44h40M16 50h28M22 56h16"/>','Es momento de responder a tu llamada.'],
+ ['XXI','El Mundo','<ellipse cx="30" cy="30" rx="14" ry="22"/><circle cx="30" cy="30" r="5"/><path d="M8 8l6 6M52 8l-6 6M8 52l6-6M52 52l-6-6"/>','Un ciclo completo. Celébralo.'],
+];
+const BACK=`<svg viewBox="0 0 60 60" style="color:#d9b46a" ${G}><circle cx="30" cy="30" r="22"/><path d="M30 8l6 16 16 6-16 6-6 16-6-16-16-6 16-6z"/><circle cx="30" cy="30" r="3" fill="currentColor"/></svg>`;
+const svg=a=>`<svg viewBox="0 0 60 60" ${G}>${a[2]}</svg>`;
+const LV=[{p:6,c:4},{p:8,c:4},{p:10,c:5},{p:12,c:6},{p:15,c:6}];
+let lvl=0,deck=[],open=[],lock=false,moves=0,found=0,t0=0,tick,unlocked=OS.load('unl',1),grim=OS.load('grim',{}),best=OS.load('best',{});
+function tabs(){const t=document.getElementById('tabs');t.innerHTML=LV.map((l,i)=>`<button data-i="${i}" class="${i===lvl&&document.getElementById('grimSec').hidden?'on':''}" ${i>=unlocked?'disabled':''}>Tirada ${['I','II','III','IV','V'][i]}${best[i]?' '+'✦'.repeat(best[i]):''}</button>`).join('')+`<button data-g="1" class="${document.getElementById('grimSec').hidden?'':'on'}">Grimorio</button>`;
+ t.querySelectorAll('button').forEach(b=>b.onclick=()=>{if(b.dataset.g){document.getElementById('grimSec').hidden=false;document.getElementById('board').hidden=true;renderGrim();tabs();return}document.getElementById('grimSec').hidden=true;document.getElementById('board').hidden=false;lvl=+b.dataset.i;deal()})}
+function deal(){const L=LV[lvl];const ids=[...Array(22).keys()].sort(()=>Math.random()-.5).slice(0,L.p);deck=[...ids,...ids].sort(()=>Math.random()-.5);moves=0;found=0;open=[];lock=false;t0=0;clearInterval(tick);document.getElementById('time').textContent='0:00';
+ const b=document.getElementById('board');const rows=Math.ceil(L.p*2/L.c);const cw=Math.max(54,Math.min(118,(Math.min(innerWidth,1000)-32-(L.c-1)*10)/L.c,((innerHeight-300)/rows-10)/1.6));b.style.gridTemplateColumns=`repeat(${L.c},${cw}px)`;
+ b.innerHTML=deck.map((id,i)=>`<button class="card" data-i="${i}" aria-label="Carta boca abajo"><div class="face back">${BACK}</div><div class="face front"><span class="num">${A[id][0]}</span>${svg(A[id])}<span class="nm">${A[id][1]}</span></div></button>`).join('');
+ b.querySelectorAll('.card').forEach(c=>c.onclick=()=>flip(c));upd();tabs();document.getElementById('omen').textContent='Voltea dos cartas. Si coinciden, el arcano es tuyo.'}
+function flip(c){if(lock||c.classList.contains('flip')||c.classList.contains('match'))return;if(!t0){t0=Date.now();tick=setInterval(()=>{const s=(Date.now()-t0)/1000|0;document.getElementById('time').textContent=`${s/60|0}:${String(s%60).padStart(2,'0')}`},500)}
+ c.classList.add('flip');open.push(c);chime(open.length===1?660:740);if(open.length<2)return;moves++;lock=true;const [a,b]=open;const ia=deck[a.dataset.i],ib=deck[b.dataset.i];
+ if(ia===ib){setTimeout(()=>{a.classList.add('match');b.classList.add('match');found++;open=[];lock=false;chime(988);setTimeout(()=>chime(1318),120);const nw=!grim[ia];grim[ia]=1;OS.save('grim',grim);document.getElementById('omen').innerHTML=`<b style="color:#f2d99a">${A[ia][1]}</b> — ${A[ia][3]}${nw?' <span style="color:#d9b46a">(nuevo en el grimorio)</span>':''}`;if(nw)OS.xp(5,'Arcano descubierto: '+A[ia][1]);upd();if(found===LV[lvl].p)win()},350)}
+ else setTimeout(()=>{a.classList.remove('flip');b.classList.remove('flip');open=[];lock=false},900);upd()}
+function upd(){document.getElementById('moves').textContent=moves;document.getElementById('pairs').textContent=found+'/'+LV[lvl].p;document.getElementById('gr').textContent=Object.keys(grim).length+'/22'}
+function win(){clearInterval(tick);const p=LV[lvl].p;const st=moves<=p*1.5?3:moves<=p*2.2?2:1;best[lvl]=Math.max(best[lvl]||0,st);OS.save('best',best);if(lvl+1>=unlocked&&lvl<4){unlocked=lvl+2;OS.save('unl',unlocked)}
+ OS.xp(20+lvl*15+st*10,`Tirada ${lvl+1} completada`);if(st===3)OS.achieve('arc_3','Clarividente','3 estrellas en Arcana');if(Object.keys(grim).length===22)OS.achieve('arc_all','Grimorio completo','Descubriste los 22 arcanos mayores');
+ document.getElementById('os').textContent='★'.repeat(st)+'☆'.repeat(3-st);document.getElementById('op').textContent=`${moves} movimientos. ${st===3?'Tu memoria es un oráculo.':st===2?'Las cartas te sonríen.':'El destino pide otra lectura.'}`;document.getElementById('ob').textContent=lvl<4?'Siguiente tirada':'Repetir la gran tirada';document.getElementById('over').hidden=false}
+document.getElementById('ob').onclick=()=>{document.getElementById('over').hidden=true;if(lvl<4)lvl++;deal()};
+function renderGrim(){document.getElementById('grim').innerHTML=A.map((a,i)=>`<div class="gc ${grim[i]?'have':''}"><div class="mini">${grim[i]?svg(a).replace('<svg','<svg style="color:#2a1f14"'):'<span style="font-family:Cinzel Decorative;color:#d9b46a55;font-size:22px">?</span>'}</div>${a[0]} · ${grim[i]?a[1]:'???'}</div>`).join('');upd()}
+let ac;function chime(f){try{ac=ac||new AudioContext();const o=ac.createOscillator(),g=ac.createGain();o.type='sine';o.frequency.value=f;g.gain.value=.05;g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+.6);o.connect(g).connect(ac.destination);o.start();o.stop(ac.currentTime+.6)}catch(e){}}
+addEventListener('resize',()=>{const L=LV[lvl];const rows=Math.ceil(L.p*2/L.c);const cw=Math.max(54,Math.min(118,(Math.min(innerWidth,1000)-32-(L.c-1)*10)/L.c,((innerHeight-300)/rows-10)/1.6));document.getElementById('board').style.gridTemplateColumns=`repeat(${L.c},${cw}px)`});
+deal();
+</script>
+</body>
+</html>

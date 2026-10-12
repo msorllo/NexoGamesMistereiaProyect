@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="es" data-app="coctelera">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>La Coctelera</title>
+<link href="https://fonts.googleapis.com/css2?family=Limelight&family=Josefin+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--wood:#120d0a;--wood2:#1e1510;--amber:#e0a458;--brass:#c9a45c;--cream:#f3e6cf;--neon:#4ef2e0;--rose:#ff6f91;--mut:#9c8a73}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--wood);color:var(--cream);font-family:'Josefin Sans',system-ui,sans-serif}
+body{background:radial-gradient(ellipse at 50% 0%,#3a2616 0%,var(--wood) 60%),var(--wood)}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:18px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.sign{font-family:'Limelight',serif;font-size:clamp(34px,6vw,58px);color:#fff;text-shadow:0 0 6px var(--neon),0 0 18px var(--neon),0 0 40px rgba(78,242,224,.6);letter-spacing:.02em;animation:flick 6s infinite}
+@keyframes flick{0%,92%,96%,100%{opacity:1}94%{opacity:.55}}
+.tips{display:flex;gap:16px;font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
+.tips b{display:block;font-family:'Limelight',Georgia,serif;font-size:26px;color:var(--amber);letter-spacing:0}
+.bar{display:grid;grid-template-columns:1fr 340px 1fr;gap:18px;align-items:start}
+.panel{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01));border:1px solid rgba(201,164,92,.3);border-radius:4px;padding:16px}
+.panel h2{font-family:'Limelight',Georgia,serif;font-weight:400;font-size:22px;margin:0 0 12px;color:var(--amber)}
+.shelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:10px 8px;border-bottom:6px solid #3a2616;padding-bottom:10px}
+.btl{background:none;border:0;color:var(--cream);font:inherit;font-size:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;padding:4px;border-radius:4px;text-align:center;line-height:1.1}
+.btl:hover{background:rgba(224,164,88,.1)}
+.btl svg{width:34px;height:64px;transition:transform .2s}
+.btl:hover svg{transform:translateY(-4px) rotate(-6deg)}
+.btl:focus-visible,button:focus-visible{outline:2px solid var(--neon);outline-offset:2px}
+.order{border:1px dashed var(--brass);padding:12px;margin-bottom:12px;font-size:15px;line-height:1.45}
+.order b{color:var(--neon);font-weight:600}
+.order .who{font-family:'Limelight',Georgia,serif;font-size:18px;color:var(--amber)}
+.glassArea{display:flex;flex-direction:column;align-items:center;gap:12px}
+#glassWrap{position:relative;width:240px;height:320px}
+#glassWrap svg{width:100%;height:100%;overflow:visible}
+.shaking{animation:shake .12s linear 10}
+@keyframes shake{25%{transform:translate(-6px,2px) rotate(-4deg)}75%{transform:translate(6px,-2px) rotate(4deg)}}
+.acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.b{font:inherit;font-weight:600;font-size:14px;letter-spacing:.12em;text-transform:uppercase;border:1px solid var(--brass);background:none;color:var(--cream);padding:10px 14px;cursor:pointer}
+.b.pri{background:var(--amber);color:var(--wood);border-color:var(--amber)}
+.b:disabled{opacity:.35;cursor:not-allowed}
+.recipe{font-size:14px;color:var(--mut);text-align:center;min-height:40px;max-width:320px}
+.recipe b{color:var(--cream)}
+.book{display:grid;gap:8px}
+.rc{display:flex;gap:10px;align-items:center;padding:8px;border-bottom:1px solid rgba(201,164,92,.18)}
+.rc .dot{width:26px;height:26px;border-radius:50%;flex:none;border:1px solid rgba(255,255,255,.2)}
+.rc b{display:block;font-weight:600;font-size:15px}
+.rc small{font-size:12px;color:var(--mut)}
+.rc.lock b{color:var(--mut)}
+.rc.lock .dot{background:repeating-linear-gradient(45deg,#2a1f18 0 4px,#1e1510 4px 8px)!important}
+.prog{height:4px;background:#2a1f18;margin:4px 0 12px}.prog i{display:block;height:100%;background:var(--neon)}
+.served{position:fixed;left:50%;top:18%;transform:translateX(-50%);background:var(--wood2);border:1px solid var(--amber);padding:14px 22px;text-align:center;opacity:0;transition:.4s;pointer-events:none;z-index:5;box-shadow:0 20px 40px rgba(0,0,0,.5)}
+.served.on{opacity:1;top:20%}
+.served h3{font-family:'Limelight',Georgia,serif;font-weight:400;font-size:28px;margin:0;color:var(--neon)}
+@media (max-width:980px){.bar{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><div class="sign">La Coctelera</div><div class="tips"><span>Propinas<b id="tips">0 €</b></span><span>Racha<b id="streak">0</b></span><span>Recetario<b id="found">0/12</b></span></div></header>
+  <div class="bar">
+    <div class="panel"><h2>La estantería</h2><div class="shelf" id="shelf"></div><p style="font-size:13px;color:var(--mut);margin:10px 0 0">Cada toque sirve una medida. Máximo 8.</p></div>
+    <div class="glassArea">
+      <div class="order" id="order"></div>
+      <div id="glassWrap"><svg id="glass" viewBox="0 0 240 320"></svg></div>
+      <div class="acts"><button class="b" id="ice">Hielo: sí</button><button class="b" id="shake">Agitar</button><button class="b" id="empty">Vaciar</button><button class="b pri" id="serve">Servir</button></div>
+      <div class="recipe" id="recipe">Mezcla libre o atiende el pedido del cliente.</div>
+    </div>
+    <div class="panel"><h2>Recetario secreto</h2><div class="prog"><i id="pr"></i></div><div class="book" id="book"></div></div>
+  </div>
+</div>
+<div class="served" id="served"><h3 id="sv1"></h3><div id="sv2"></div></div>
+<script>
+const ING={ron:{n:'Ron blanco',c:'#f4efe4',a:.35,alc:1},gin:{n:'Ginebra',c:'#e6f4f1',a:.35,alc:1},teq:{n:'Tequila',c:'#f2dfa6',a:.5,alc:1},vod:{n:'Vodka',c:'#f5f7fb',a:.3,alc:1},tri:{n:'Triple seco',c:'#ffcf7a',a:.55,alc:1},kah:{n:'Licor de café',c:'#3b1e0e',a:.95,alc:1},
+ lim:{n:'Zumo de lima',c:'#c9f06a',a:.7},nar:{n:'Zumo de naranja',c:'#ffa12b',a:.9},pin:{n:'Zumo de piña',c:'#ffe066',a:.85},arn:{n:'Zumo de arándano',c:'#d2254b',a:.85},coc:{n:'Leche de coco',c:'#fbf7ef',a:.97},
+ azu:{n:'Sirope de azúcar',c:'#fff4d6',a:.5},gra:{n:'Granadina',c:'#c8102e',a:.9},men:{n:'Hojas de menta',c:'#2f9e44',a:.9,leaf:1},sod:{n:'Soda',c:'#e9fbff',a:.2,fizz:1},ton:{n:'Tónica',c:'#eef9ff',a:.25,fizz:1},esp:{n:'Espresso',c:'#2b160b',a:1}};
+const REC=[
+ {n:'Mojito',i:['ron','lim','azu','men','sod'],h:'Cubano, fresco, con hojas que se machacan.'},{n:'Daiquiri',i:['ron','lim','azu'],h:'Tres ingredientes, ron y acidez.'},
+ {n:'Margarita',i:['teq','tri','lim'],h:'México, naranja y lima.'},{n:'Gin-tonic',i:['gin','ton'],h:'Dos ingredientes y burbujas amargas.'},
+ {n:'Cosmopolitan',i:['vod','tri','lim','arn'],h:'Rosa, urbano y con arándano.'},{n:'Piña colada',i:['ron','pin','coc'],h:'Tropical y cremosa.'},
+ {n:'Tequila sunrise',i:['teq','nar','gra'],h:'Un amanecer en capas.'},{n:'Espresso martini',i:['vod','kah','esp','azu'],h:'Para despertar la noche.'},
+ {n:'Destornillador',i:['vod','nar'],h:'El clásico de dos ingredientes con naranja.'},{n:'Mojito sin alcohol',i:['lim','azu','men','sod'],h:'El fresco cubano, sin ron.',na:1},
+ {n:'Colada sin alcohol',i:['pin','coc'],h:'Solo la parte tropical.',na:1},{n:'Amanecer sin alcohol',i:['nar','gra'],h:'El sunrise sin tequila.',na:1}];
+const CUST=['Una señora con sombrero de ala ancha','Un saxofonista entre sets','Una detective con gabardina','Un turista algo perdido','Una pareja que celebra aniversario','El dueño del local, de incógnito'];
+let glass=[],ice=true,shaken=false,tips=OS.load('tips',0),found=OS.load('found',{}),streak=0,order=null,served=OS.load('served',0);
+function bottle(k){const g=ING[k];return`<svg viewBox="0 0 34 64"><rect x="13" y="2" width="8" height="12" rx="1" fill="#5a3d24"/><path d="M11 14h12v6l5 6v34a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3V26l5-6z" fill="${g.c}" fill-opacity="${Math.max(.35,g.a)}" stroke="rgba(243,230,207,.6)"/><rect x="8" y="34" width="18" height="14" fill="#f3e6cf" opacity=".85"/><rect x="10" y="38" width="14" height="2" fill="#5a3d24"/><rect x="10" y="42" width="10" height="2" fill="#5a3d24"/></svg>`}
+function shelf(){document.getElementById('shelf').innerHTML=Object.entries(ING).map(([k,g])=>`<button class="btl" data-k="${k}" title="${g.n}">${bottle(k)}${g.n}</button>`).join('');document.querySelectorAll('.btl').forEach(b=>b.onclick=()=>pour(b.dataset.k))}
+function pour(k){if(glass.length>=8){msg('El vaso está lleno. Sirve o vacía.');return}glass.push(k);shaken=false;glug();drawGlass(true)}
+function mixColor(){let r=0,g=0,b=0,n=0;for(const k of glass){const c=parseInt(ING[k].c.slice(1),16),w=ING[k].a+.2;r+=(c>>16)*w;g+=(c>>8&255)*w;b+=(c&255)*w;n+=w}return n?`rgb(${r/n|0},${g/n|0},${b/n|0})`:'transparent'}
+function drawGlass(anim){const s=document.getElementById('glass');const top=40,bot=300,L=48,R=192,lh=(bot-top-20)/8;let h='<defs><clipPath id="cl"><path d="M50 40 L60 296 Q60 300 64 300 L176 300 Q180 300 180 296 L190 40 Z"/></clipPath><linearGradient id="gl" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity=".25"/><stop offset=".2" stop-color="#fff" stop-opacity=".05"/><stop offset=".85" stop-color="#fff" stop-opacity=".02"/><stop offset="1" stop-color="#fff" stop-opacity=".2"/></linearGradient></defs><g clip-path="url(#cl)">';
+ if(shaken&&glass.length){const y=bot-glass.length*lh;h+=`<rect x="40" y="${y}" width="160" height="${bot-y}" fill="${mixColor()}" opacity=".92"/><path d="M40 ${y} q20 -6 40 0 t40 0 t40 0 t40 0 v8 h-160z" fill="#fff" opacity=".25"/>`}
+ else glass.forEach((k,i)=>{const y=bot-(i+1)*lh;const g=ING[k];h+=`<rect x="40" y="${y}" width="160" height="${lh+1}" fill="${g.c}" opacity="${Math.max(.3,g.a)}" ${anim&&i===glass.length-1?'style="animation:none"':''}/>`;if(g.leaf)for(let j=0;j<3;j++)h+=`<ellipse cx="${80+j*35}" cy="${y+lh/2}" rx="11" ry="5" fill="#2f9e44" transform="rotate(${j*40-30} ${80+j*35} ${y+lh/2})"/>`});
+ if(glass.some(k=>ING[k].fizz))for(let i=0;i<14;i++){const x=64+((i*37)%110),y=bot-10-((Date.now()/20+i*53)%(glass.length*lh||1));h+=`<circle cx="${x}" cy="${y}" r="2" fill="#fff" opacity=".6"/>`}
+ if(ice&&glass.length)for(let i=0;i<4;i++){const x=70+(i%2)*50+(i>1?15:0),y=bot-Math.min(glass.length*lh,200)+10+i*28;h+=`<rect x="${x}" y="${y}" width="40" height="36" rx="6" fill="#eaf8ff" opacity=".45" stroke="#fff" stroke-opacity=".6" transform="rotate(${i*17-20} ${x+20} ${y+18})"/>`}
+ h+='</g><path d="M50 40 L60 296 Q60 300 64 300 L176 300 Q180 300 180 296 L190 40" fill="url(#gl)" stroke="rgba(243,230,207,.75)" stroke-width="3"/><ellipse cx="120" cy="40" rx="70" ry="6" fill="none" stroke="rgba(243,230,207,.5)" stroke-width="2"/><path d="M60 300 L180 300 L178 312 L62 312 Z" fill="rgba(243,230,207,.35)"/>';
+ if(glass.length){const recipe=[...new Set(glass)].map(k=>ING[k].n).join(' · ');document.getElementById('recipe').innerHTML=`<b>${glass.length}/8 medidas:</b> ${recipe}${shaken?' · <em>agitado</em>':''}`}else document.getElementById('recipe').textContent='Mezcla libre o atiende el pedido del cliente.';
+ s.innerHTML=h}
+setInterval(()=>{if(glass.some(k=>ING[k].fizz))drawGlass()},120);
+function newOrder(){const pool=REC;order=pool[Math.random()*pool.length|0];const who=CUST[Math.random()*CUST.length|0];const known=found[order.n];document.getElementById('order').innerHTML=`<div class="who">${who}</div>pide un <b>${order.n}</b>.<br><small style="color:var(--mut)">${known?'Ya lo conoces: '+order.i.map(k=>ING[k].n.toLowerCase()).join(', ')+'.':'Pista: '+order.h}</small>`}
+function serve(){if(!glass.length){msg('El vaso está vacío.');return}const set=[...new Set(glass)].sort().join();const hit=REC.find(r=>[...r.i].sort().join()===set);
+ if(hit){const isNew=!found[hit.n];found[hit.n]=1;OS.save('found',found);const forOrder=order&&order.n===hit.n;let tip=forOrder?8+streak*2:3;if(isNew)tip+=5;tips+=tip;OS.save('tips',tips);served++;OS.save('served',served);
+  if(forOrder){streak++;OS.xp(15+streak*3,'Pedido servido: '+hit.n)}else{OS.xp(8,'Cóctel servido: '+hit.n)}if(isNew)OS.xp(20,'Receta descubierta: '+hit.n);
+  pop(hit.n,`${isNew?'¡Receta nueva! ':''}+${tip} € de propina${forOrder?' · pedido perfecto':''}`);chime();
+  if(Object.keys(found).length===REC.length)OS.achieve('coc_all','Maestro coctelero','Descubriste las 12 recetas');if(streak>=5)OS.achieve('coc_str','Barra imparable','5 pedidos seguidos perfectos');if(REC.filter(r=>r.na).every(r=>found[r.n]))OS.achieve('coc_na','Sin alcohol, con arte','Descubriste los 3 cócteles sin alcohol');if(forOrder)newOrder()}
+ else{const name=['El Experimento','Rayo de Medianoche','Susurro de Barrica','La Duda Dorada','Niebla del Puerto'][glass.length%5];if(order&&order.n){streak=0}tips+=1;OS.save('tips',tips);pop(name,'Creación propia. Al cliente le ha hecho gracia: +1 €');}
+ glass=[];shaken=false;ui();drawGlass()}
+function ui(){document.getElementById('tips').textContent=tips+' €';document.getElementById('streak').textContent=streak;const n=Object.keys(found).length;document.getElementById('found').textContent=n+'/12';document.getElementById('pr').style.width=n/12*100+'%';
+ document.getElementById('book').innerHTML=REC.map(r=>{const k=found[r.n];const col=k?(()=>{glass=r.i;const c=mixColor();glass=[];return c})():'';return`<div class="rc ${k?'':'lock'}"><span class="dot" style="background:${col}"></span><div><b>${k?r.n:'???'}${r.na?' <small style="color:var(--neon)">sin alcohol</small>':''}</b><small>${k?r.i.map(x=>ING[x].n).join(', '):r.h}</small></div></div>`}).join('')}
+let pt;function pop(a,b){document.getElementById('sv1').textContent=a;document.getElementById('sv2').textContent=b;const s=document.getElementById('served');s.classList.add('on');clearTimeout(pt);pt=setTimeout(()=>s.classList.remove('on'),2200)}
+function msg(t){document.getElementById('recipe').textContent=t}
+document.getElementById('ice').onclick=e=>{ice=!ice;e.currentTarget.textContent='Hielo: '+(ice?'sí':'no');drawGlass()};
+document.getElementById('shake').onclick=()=>{if(!glass.length)return;const w=document.getElementById('glassWrap');w.classList.remove('shaking');void w.offsetWidth;w.classList.add('shaking');rattle();setTimeout(()=>{shaken=true;drawGlass()},600)};
+document.getElementById('empty').onclick=()=>{glass=[];shaken=false;drawGlass()};document.getElementById('serve').onclick=serve;
+let ac;function tone(f,d,t='sine',v=.05){try{ac=ac||new AudioContext();const o=ac.createOscillator(),g=ac.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d);o.connect(g).connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}}
+function glug(){tone(180+Math.random()*60,.12,'sine',.08);setTimeout(()=>tone(140,.1,'sine',.06),70)}function rattle(){for(let i=0;i<10;i++)setTimeout(()=>tone(2000+Math.random()*1500,.03,'square',.015),i*60)}function chime(){[784,988,1318].forEach((f,i)=>setTimeout(()=>tone(f,.4),i*90))}
+shelf();newOrder();ui();glass=['ron','lim','azu','men'];drawGlass();
+</script>
+</body>
+</html>

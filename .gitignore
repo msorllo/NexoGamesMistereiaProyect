@@ -1,0 +1,14 @@
+# Salidas regenerables (python tools/build.py)
+dist/
+# Capturas y temporales de pruebas
+tools/shots/
+__pycache__/
+*.pyc
+*.blend1
+# Scripts de orquestación locales con rutas personales
+tools/new/nova/_wf/
+# Secretos / entorno (por si algún día se añaden)
+.env
+.env.*
+*.pem
+*.key

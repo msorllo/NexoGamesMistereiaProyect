@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="es" data-app="golf">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Minigolf Cósmico</title>
+<link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Exo+2:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--void:#12062b;--cyan:#39f3ff;--pink:#ff4fd8;--lilac:#c6b8ff;--txt:#f1ecff}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--void);color:var(--txt);font-family:'Exo 2',system-ui,sans-serif;overflow:hidden;user-select:none}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
+.hud{position:fixed;top:0;left:0;right:0;padding:14px 18px;display:flex;justify-content:space-between;gap:12px;pointer-events:none;flex-wrap:wrap;align-items:flex-start}
+h1{font-family:'Russo One',Impact,sans-serif;font-weight:400;margin:0;font-size:clamp(24px,3.4vw,38px);line-height:.95;letter-spacing:.02em;text-shadow:0 0 18px rgba(57,243,255,.6)}
+h1 span{color:var(--pink);text-shadow:0 0 18px rgba(255,79,216,.7)}
+.holeinfo{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--lilac);margin-top:6px}
+.card{pointer-events:auto;background:rgba(18,6,43,.72);border:1px solid rgba(57,243,255,.35);border-radius:14px;padding:8px 10px;backdrop-filter:blur(6px)}
+table{border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:13px}
+td,th{padding:3px 7px;text-align:center}
+th{font-weight:600;color:var(--lilac);font-size:11px}
+td.cur{background:rgba(57,243,255,.2);border-radius:6px}
+td.u{color:var(--cyan)}td.o{color:var(--pink)}
+.bottom{position:fixed;left:0;right:0;bottom:0;padding:14px 18px;display:flex;justify-content:space-between;align-items:flex-end;gap:12px;pointer-events:none;flex-wrap:wrap}
+.power{width:200px;height:14px;border-radius:8px;background:rgba(255,255,255,.1);overflow:hidden;border:1px solid rgba(57,243,255,.4)}
+.power i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--pink))}
+.big{font-family:'Russo One',sans-serif;font-size:42px;line-height:1;text-shadow:0 0 16px rgba(255,79,216,.6)}
+.big small{font-family:'Exo 2';font-size:12px;letter-spacing:.2em;display:block;color:var(--lilac)}
+.cam{display:flex;gap:6px;pointer-events:auto}
+.cam button,.btn{font:inherit;font-weight:800;background:rgba(18,6,43,.8);border:1px solid rgba(57,243,255,.45);color:var(--txt);border-radius:12px;padding:10px 14px;cursor:pointer}
+.cam button:focus-visible,.btn:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+.msg{position:fixed;left:0;right:0;top:34%;text-align:center;font-family:'Russo One';font-size:clamp(30px,6vw,64px);pointer-events:none;opacity:0;transition:.4s;transform:scale(.9);text-shadow:0 0 30px var(--pink)}
+.msg.on{opacity:1;transform:none}
+.over{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(10,3,26,.78);padding:16px}
+.over[hidden]{display:none}
+.over .box{background:rgba(18,6,43,.95);border:1px solid rgba(57,243,255,.5);border-radius:24px;padding:24px 28px;text-align:center;max-width:460px;box-shadow:0 0 60px rgba(57,243,255,.2)}
+.over h2{font-family:'Russo One';font-weight:400;font-size:40px;margin:0 0 6px}
+.over p{color:var(--lilac);line-height:1.5}
+.btn.pri{background:var(--pink);border-color:var(--pink);color:#fff;font-size:18px;padding:12px 26px}
+.tip{font-size:13px;color:var(--lilac);max-width:280px;line-height:1.35}
+.load{position:fixed;inset:0;display:grid;place-items:center;font-family:'Russo One';color:var(--cyan)}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="load" id="load">Cargando constelación…</div>
+<div class="hud"><div><h1>MINIGOLF <span>CÓSMICO</span></h1><div class="holeinfo" id="hi"></div></div><div class="card"><table id="sc"></table></div></div>
+<div class="bottom">
+  <div class="card tip" id="tip">Arrastra desde cualquier punto y suelta: la bola sale en dirección contraria, como un tirachinas. Cuanto más lejos, más fuerza.</div>
+  <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end"><div class="big" id="strokes">0<small>GOLPES</small></div><div class="power"><i id="pw"></i></div><div class="cam"><button id="cl" aria-label="Girar cámara a la izquierda">⟲</button><button id="cr" aria-label="Girar cámara a la derecha">⟳</button><button id="rs">Reintentar hoyo</button></div></div>
+</div>
+<div class="msg" id="msg"></div>
+<div class="over" id="over"><div class="box"><h2>Minigolf Cósmico</h2><p id="op">Seis hoyos flotando entre asteroides. Setas de neón que rebotan, portales que te teletransportan y brazos giratorios. Termina el recorrido con los menos golpes posibles.</p><button class="btn pri" id="go">Empezar recorrido</button></div></div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/GLTFLoader.js"></script>
+<script>const GLB="__GLB__";</script>
+<script>
+function b64(s){const b=atob(s),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a.buffer}
+const HOLES=[
+ {n:'Despegue',par:2,m:["#######","#S###H#","#######"]},
+ {n:'Órbita en L',par:3,m:["####....","#S##....","####....","..######","..####H#","..######"]},
+ {n:'Setas de neón',par:3,m:["#########","#S##B##H#","###B#B###","#########"]},
+ {n:'Agujero de gusano',par:2,m:["####..####","#SP#..#QH#","####..####"]},
+ {n:'Molino lunar',par:3,m:["#########","#########","#S##A##H#","#########","#########"]},
+ {n:'Gran final',par:4,m:["##########","#S##B###P#","##########","..........","##########","#Q###A##H#","##########"]},
+];
+const LIB={};let R,scene,camera,clock=new THREE.Clock(),H,ball,ballObj,vel=new THREE.Vector2(),hole=0,strokes=0,card=[],moving=false,aim=null,camAng=0,camPos=new THREE.Vector3(),holeObjs=[],arm=null,t=0,portalCd=0,sunk=false,best=OS.load('best',null);
+const r=.12;
+function get(n){return LIB[n].clone(true)}
+function setup(){R=new THREE.WebGLRenderer({canvas:document.getElementById('c'),antialias:true});R.setPixelRatio(Math.min(devicePixelRatio,2));R.outputEncoding=THREE.sRGBEncoding;R.toneMapping=THREE.ACESFilmicToneMapping;R.shadowMap.enabled=true;R.shadowMap.type=THREE.PCFSoftShadowMap;
+ scene=new THREE.Scene();scene.background=new THREE.Color('#12062b');scene.fog=new THREE.FogExp2('#12062b',.028);camera=new THREE.PerspectiveCamera(50,1,.1,300);
+ scene.add(new THREE.HemisphereLight('#b9a8ff','#12062b',.7));const sun=new THREE.DirectionalLight('#fff0ff',1.2);sun.position.set(6,12,4);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);Object.assign(sun.shadow.camera,{left:-10,right:10,top:10,bottom:-10});scene.add(sun);scene.userData.sun=sun;
+ const sg=new THREE.BufferGeometry(),sp=[],sc=[];for(let i=0;i<1500;i++){const v=new THREE.Vector3().randomDirection().multiplyScalar(80+Math.random()*40);sp.push(v.x,v.y,v.z);const c=new THREE.Color().setHSL(.6+Math.random()*.35,.8,.75+Math.random()*.25);sc.push(c.r,c.g,c.b)}sg.setAttribute('position',new THREE.Float32BufferAttribute(sp,3));sg.setAttribute('color',new THREE.Float32BufferAttribute(sc,3));scene.add(new THREE.Points(sg,new THREE.PointsMaterial({size:.35,vertexColors:true,fog:false})));
+ const pl=get('Planeta');pl.scale.setScalar(9);pl.position.set(-30,8,-45);scene.add(pl);scene.userData.planet=pl;
+ const u=get('Ovni');u.scale.setScalar(1.3);scene.add(u);scene.userData.ufo=u;
+ scene.userData.ast=[];for(let i=0;i<22;i++){const a=get('Asteroide'+(1+i%3));const ang=Math.random()*Math.PI*2,d=10+Math.random()*16;a.position.set(Math.cos(ang)*d,-4+Math.random()*8,Math.sin(ang)*d);a.scale.setScalar(.6+Math.random()*1.8);a.userData.spin=new THREE.Vector3(Math.random()-.5,Math.random()-.5,Math.random()-.5).multiplyScalar(.4);scene.add(a);scene.userData.ast.push(a)}
+ addEventListener('resize',resize);resize();
+ const cv=R.domElement;cv.addEventListener('pointerdown',e=>{if(moving||sunk||!H)return;aim={x:e.clientX,y:e.clientY,p:0};cv.setPointerCapture(e.pointerId)});
+ cv.addEventListener('pointermove',e=>{if(!aim)return;const dx=e.clientX-aim.x,dy=e.clientY-aim.y;aim.dx=dx;aim.dy=dy;aim.p=Math.min(1,Math.hypot(dx,dy)/220);document.getElementById('pw').style.width=aim.p*100+'%'});
+ cv.addEventListener('pointerup',()=>{if(!aim)return;if(aim.p>.04){const f=new THREE.Vector3(),rt=new THREE.Vector3();camera.getWorldDirection(f);f.y=0;f.normalize();rt.crossVectors(f,new THREE.Vector3(0,1,0));const dir=new THREE.Vector2(-(rt.x*aim.dx-f.x*aim.dy),-(rt.z*aim.dx-f.z*aim.dy)).normalize();vel.copy(dir.multiplyScalar(1.2+aim.p*10));moving=true;strokes++;upd();sfx(200+aim.p*300,.12,'triangle')}aim=null;document.getElementById('pw').style.width='0'});
+ document.getElementById('cl').onclick=()=>camAng+=Math.PI/4;document.getElementById('cr').onclick=()=>camAng-=Math.PI/4;document.getElementById('rs').onclick=()=>{strokes++;load(hole,true)}}
+function resize(){R.setSize(innerWidth,innerHeight,false);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix()}
+function cellAt(x,z){const i=Math.floor(x+.5),j=Math.floor(z+.5);return H.m[j]&&H.m[j][i]?H.m[j][i]:'.'}
+function solid(x,z){return cellAt(x,z)==='.'}
+function find(ch){for(let j=0;j<H.m.length;j++){const i=H.m[j].indexOf(ch);if(i>=0)return new THREE.Vector2(i,j)}return null}
+const floorMat=new THREE.MeshStandardMaterial({color:'#3d2d74',roughness:.8});const railMat=new THREE.MeshStandardMaterial({color:'#39f3ff',emissive:'#39f3ff',emissiveIntensity:2.2});const armMat=new THREE.MeshStandardMaterial({color:'#ff4fd8',emissive:'#ff4fd8',emissiveIntensity:2});
+(function(){const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d');g.fillStyle='#3d2d74';g.fillRect(0,0,64,64);g.strokeStyle='rgba(198,184,255,.25)';g.lineWidth=2;g.strokeRect(1,1,62,62);for(let i=0;i<40;i++){g.fillStyle=`rgba(255,255,255,${Math.random()*.08})`;g.fillRect(Math.random()*64,Math.random()*64,2,2)}floorMat.map=new THREE.CanvasTexture(c);floorMat.map.encoding=THREE.sRGBEncoding})();
+function load(i,keep){hole=i;H=HOLES[i];if(!keep)strokes=0;sunk=false;moving=false;vel.set(0,0);holeObjs.forEach(o=>scene.remove(o));holeObjs=[];arm=null;const add=o=>{scene.add(o);holeObjs.push(o);return o};
+ const g=new THREE.Group();H.m.forEach((row,j)=>[...row].forEach((ch,x)=>{if(ch==='.')return;const b=new THREE.Mesh(new THREE.BoxGeometry(1,.3,1),floorMat);b.position.set(x,-.15,j);b.receiveShadow=true;g.add(b);
+  const nb=[[1,0],[-1,0],[0,1],[0,-1]];nb.forEach(([dx,dz])=>{const n=(H.m[j+dz]||'')[x+dx];if(n&&n!=='.')return;const w=new THREE.Mesh(new THREE.BoxGeometry(dx?.08:1.08,.16,dz?.08:1.08),railMat);w.position.set(x+dx*.5,.06,j+dz*.5);g.add(w)});
+  if(ch==='B'){const bb=get('Bumper');bb.position.set(x,0,j);g.add(bb)}
+  if(ch==='P'||ch==='Q'){const p=get('Portal');p.position.set(x,0,j);p.userData.portal=1;g.add(p)}
+  if(ch==='A'){const hub=get('Bumper');hub.position.set(x,0,j);hub.scale.setScalar(.6);g.add(hub);const a=new THREE.Mesh(new THREE.BoxGeometry(2.4,.14,.14),armMat);a.position.set(x,.14,j);a.castShadow=true;g.add(a);arm={c:new THREE.Vector2(x,j),m:a,ang:0}}}));
+ add(g);const s=find('S'),h=find('H');const tee=get('Tee');tee.position.set(s.x,0,s.y);add(tee);const hl=get('Hoyo');hl.position.set(h.x,.001,h.y);add(hl);const fl=get('Bandera');fl.position.set(h.x,0,h.y);fl.scale.setScalar(.8);add(fl);
+ const under=get('Asteroide2');const w=H.m[0].length,d=H.m.length;under.position.set((w-1)/2,-1.6,(d-1)/2);under.scale.set(w*.55,1.4,d*.7);add(under);
+ ball=new THREE.Vector2(s.x,s.y);if(!ballObj){ballObj=get('Bola');scene.add(ballObj)}ballObj.position.set(ball.x,.12,ball.y);ballObj.visible=true;
+ const toH=new THREE.Vector2(h.x-s.x,h.y-s.y);camAng=Math.atan2(toH.x,toH.y);camPos.set(ball.x-Math.sin(camAng)*6,5,ball.y-Math.cos(camAng)*6);
+ document.getElementById('hi').textContent=`Hoyo ${i+1} · ${H.n} · Par ${H.par}`;upd()}
+function upd(){document.getElementById('strokes').firstChild.nodeValue=strokes;const tot=card.reduce((a,b)=>a+b,0),par=HOLES.slice(0,card.length).reduce((a,h)=>a+h.par,0);
+ document.getElementById('sc').innerHTML='<tr><th>Hoyo</th>'+HOLES.map((_,i)=>`<th>${i+1}</th>`).join('')+'<th>Tot</th></tr><tr><th>Par</th>'+HOLES.map(h=>`<td>${h.par}</td>`).join('')+`<td>${HOLES.reduce((a,h)=>a+h.par,0)}</td></tr><tr><th>Tú</th>`+HOLES.map((h,i)=>{const v=card[i];return`<td class="${i===hole&&v==null?'cur':''} ${v!=null?(v<h.par?'u':v>h.par?'o':''):''}">${v??(i===hole?strokes:'·')}</td>`}).join('')+`<td>${card.length?tot+(tot-par>=0?' (+'+(tot-par)+')':' ('+(tot-par)+')'):'·'}</td></tr>`}
+function msg(t){const m=document.getElementById('msg');m.textContent=t;m.classList.add('on');setTimeout(()=>m.classList.remove('on'),1500)}
+let ac;function sfx(f,d,type='sine',v=.06){try{ac=ac||new AudioContext();const o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d);o.connect(g).connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}}
+function physics(dt){if(!moving)return;const n=6;for(let k=0;k<n;k++){const h=dt/n;
+  const nx=ball.x+vel.x*h;if(solid(nx+Math.sign(vel.x)*r,ball.y)){vel.x*=-.8;sfx(700,.04,'square',.02)}else ball.x=nx;
+  const nz=ball.y+vel.y*h;if(solid(ball.x,nz+Math.sign(vel.y)*r)){vel.y*=-.8;sfx(700,.04,'square',.02)}else ball.y=nz;
+  H.m.forEach((row,j)=>[...row].forEach((ch,x)=>{if(ch!=='B')return;const d=new THREE.Vector2(ball.x-x,ball.y-j),L=d.length();if(L<r+.24&&L>0){d.normalize();ball.set(x+d.x*(r+.241),j+d.y*(r+.241));const vn=vel.dot(d);if(vn<0)vel.sub(d.clone().multiplyScalar(2*vn));vel.setLength(Math.max(4,vel.length()*1.15));sfx(980,.12,'triangle',.05)}}));
+  if(arm){const dir=new THREE.Vector2(Math.cos(arm.ang),-Math.sin(arm.ang));const rel=ball.clone().sub(arm.c);let u=Math.max(-1.2,Math.min(1.2,rel.dot(dir)));const cp=arm.c.clone().add(dir.clone().multiplyScalar(u));const d=ball.clone().sub(cp),L=d.length();if(L<r+.08&&L>0){d.normalize();ball.copy(cp.clone().add(d.clone().multiplyScalar(r+.081)));const vn=vel.dot(d);if(vn<0)vel.sub(d.clone().multiplyScalar(1.6*vn));const push=new THREE.Vector2(-dir.y,dir.x).multiplyScalar(u*1.3);vel.add(push.dot(d)>0?push:push.negate());sfx(400,.06,'square',.03)}}
+  if(portalCd<=0){const c=cellAt(ball.x,ball.y);if(c==='P'||c==='Q'){const o=find(c==='P'?'Q':'P');const ctr=find(c);if(ball.distanceTo(ctr)<.32){ball.set(o.x+Math.sign(vel.x)*.01,o.y);portalCd=.8;sfx(300,.4,'sawtooth',.04);sfx(900,.4,'sine',.04);msg('¡Teletransporte!')}}}
+  const hp=find('H');const dh=ball.distanceTo(hp);if(dh<.2){if(vel.length()<5.5){sink();return}else{vel.rotateAround(new THREE.Vector2(),.3)}}}
+ vel.multiplyScalar(Math.exp(-1.15*dt));if(vel.length()<.06){vel.set(0,0);moving=false}}
+function sink(){moving=false;sunk=true;vel.set(0,0);ballObj.visible=false;card[hole]=strokes;const d=strokes-H.par;const names={'-3':'¡Albatros!','-2':'¡Águila!','-1':'¡Birdie!','0':'Par','1':'Bogey','2':'Doble bogey'};
+ msg(strokes===1?'¡HOYO EN UNO!':(names[d]||`+${d}`));[523,659,784,1046].forEach((f,i)=>setTimeout(()=>sfx(f,.3,'triangle',.05),i*90));
+ OS.xp(12+Math.max(0,H.par-strokes)*12,`Hoyo ${hole+1}: ${strokes} golpes`);if(strokes===1)OS.achieve('golf_ace','Hoyo en uno','Metiste la bola de un solo golpe');if(d<0)OS.achieve('golf_birdie','Pájaro cósmico','Terminaste un hoyo bajo par');
+ upd();setTimeout(()=>{if(hole<HOLES.length-1)load(hole+1);else finish()},1700)}
+function finish(){const tot=card.reduce((a,b)=>a+b,0),par=HOLES.reduce((a,h)=>a+h.par,0);const nb=best==null||tot<best;if(nb){best=tot;OS.save('best',best)}OS.xp(40,'Recorrido cósmico completado');OS.achieve('golf_done','Astronauta del green','Terminaste los 6 hoyos');if(tot<=par)OS.achieve('golf_par','Par galáctico','Recorrido completo al par o mejor');
+ document.querySelector('.over h2').textContent=tot<=par?'¡Leyenda galáctica!':'Recorrido completado';document.getElementById('op').innerHTML=`${tot} golpes (par ${par}, ${tot-par>=0?'+':''}${tot-par}).${nb?' <b style="color:#39f3ff">¡Nuevo récord!</b>':' Récord: '+best+'.'}`;document.getElementById('go').textContent='Jugar otra vez';document.getElementById('over').hidden=false}
+document.getElementById('go').onclick=()=>{card=[];document.getElementById('over').hidden=true;load(0)};
+const aimLine=new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,1,8),new THREE.MeshBasicMaterial({color:'#39f3ff',transparent:true,opacity:.9}));const aimTip=new THREE.Mesh(new THREE.ConeGeometry(.1,.25,12),new THREE.MeshBasicMaterial({color:'#ff4fd8'}));
+function loop(){requestAnimationFrame(loop);const dt=Math.min(.033,clock.getDelta());t+=dt;portalCd-=dt;
+ if(arm){arm.ang+=dt*1.3;arm.m.rotation.y=arm.ang}
+ if(H){physics(dt);ballObj.position.set(ball.x,.12,ball.y);ballObj.rotation.x+=vel.y*dt*4;ballObj.rotation.z-=vel.x*dt*4;
+  const tgt=new THREE.Vector3(ball.x-Math.sin(camAng)*6,4.6,ball.y-Math.cos(camAng)*6);camPos.lerp(tgt,.06);camera.position.copy(camPos);camera.lookAt(ball.x,0,ball.y);
+  if(aim&&aim.p>.04){const f=new THREE.Vector3(),rt=new THREE.Vector3();camera.getWorldDirection(f);f.y=0;f.normalize();rt.crossVectors(f,new THREE.Vector3(0,1,0));const d=new THREE.Vector3(-(rt.x*aim.dx-f.x*aim.dy),0,-(rt.z*aim.dx-f.z*aim.dy)).normalize();const L=.4+aim.p*2.2;
+   if(!aimLine.parent){scene.add(aimLine);scene.add(aimTip)}aimLine.scale.y=L;aimLine.position.set(ball.x+d.x*L/2,.12,ball.y+d.z*L/2);aimLine.lookAt(ball.x+d.x*L,.12,ball.y+d.z*L);aimLine.rotateX(Math.PI/2);aimTip.position.set(ball.x+d.x*L,.12,ball.y+d.z*L);aimTip.lookAt(ball.x+d.x*(L+1),.12,ball.y+d.z*(L+1));aimTip.rotateX(Math.PI/2)}
+  else if(aimLine.parent){scene.remove(aimLine);scene.remove(aimTip)}}
+ holeObjs.forEach(g=>g.traverse&&g.traverse(o=>{if(o.userData.portal)o.rotation.y+=dt*1.5}));
+ scene.userData.ast.forEach(a=>{a.rotation.x+=a.userData.spin.x*dt;a.rotation.y+=a.userData.spin.y*dt});scene.userData.planet.rotation.y+=dt*.05;const u=scene.userData.ufo;u.position.set(Math.cos(t*.25)*14,5+Math.sin(t*.7),Math.sin(t*.25)*14-6);u.rotation.y+=dt*2;
+ R.render(scene,camera)}
+setup.ok=false;new THREE.GLTFLoader().parse(b64(GLB),'',g=>{g.scene.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});[...g.scene.children].forEach(c=>LIB[c.name]=c);document.getElementById('load').remove();setup();load(0);loop()},()=>document.getElementById('load').textContent='No se pudieron cargar los modelos 3D.');
+</script>
+</body>
+</html>

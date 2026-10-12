@@ -1,0 +1,4 @@
+/apps/*
+  Cache-Control: public, max-age=86400
+/index.html
+  Cache-Control: public, max-age=600

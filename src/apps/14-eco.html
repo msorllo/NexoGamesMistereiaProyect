@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="es" data-app="eco">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Eco Abisal</title>
+<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@500;700&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--deep:#021a24;--teal:#19e3c0;--vio:#9b6bff;--pink:#ff5fa2;--amb:#ffc15e;--foam:#d9fbf4;--mist:#6fa3a8}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--deep);color:var(--foam);font-family:'Quicksand',system-ui,sans-serif;overflow:hidden;user-select:none}
+canvas{position:fixed;inset:0;width:100%;height:100%}
+.hud{position:fixed;top:16px;left:18px;right:18px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;pointer-events:none}
+.title{font-family:'Comfortaa',sans-serif;font-weight:700;font-size:clamp(26px,4vw,40px);letter-spacing:.02em;text-shadow:0 0 18px rgba(25,227,192,.6)}
+.title small{display:block;font-family:'Quicksand',system-ui,sans-serif;font-size:12px;letter-spacing:.3em;color:var(--mist);font-weight:600;text-shadow:none;margin-top:4px}
+.depth{text-align:right;font-weight:700}
+.depth b{font-family:'Comfortaa',system-ui,sans-serif;font-size:40px;display:block;line-height:1;color:var(--teal);text-shadow:0 0 16px rgba(25,227,192,.5);font-variant-numeric:tabular-nums}
+.depth small{color:var(--mist);font-size:12px;letter-spacing:.14em;text-transform:uppercase}
+.gauge{position:fixed;left:22px;top:110px;bottom:120px;width:4px;background:rgba(217,251,244,.12);border-radius:2px}
+.gauge i{position:absolute;left:-5px;width:14px;height:14px;border-radius:50%;background:var(--teal);box-shadow:0 0 14px var(--teal);transition:top .6s}
+.gauge span{position:absolute;left:14px;font-size:10px;color:var(--mist);transform:translateY(-50%);white-space:nowrap;letter-spacing:.08em}
+.status{position:fixed;left:0;right:0;bottom:30px;text-align:center;font-size:18px;font-weight:600;pointer-events:none;letter-spacing:.02em}
+.status em{font-style:normal;color:var(--amb)}
+.menu{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,rgba(2,26,36,.5),rgba(1,10,15,.92));padding:16px;text-align:center}
+.menu[hidden]{display:none}
+.menu h1{font-family:'Comfortaa',system-ui,sans-serif;font-size:clamp(56px,12vw,110px);margin:0;line-height:.9;background:linear-gradient(180deg,#d9fbf4,#19e3c0 60%,#9b6bff);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 30px rgba(25,227,192,.4))}
+.menu p{max-width:440px;margin:14px auto;line-height:1.6;color:#b5dcd6}
+.modes{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:16px 0}
+.modes button{background:rgba(217,251,244,.06);border:1.5px solid rgba(25,227,192,.35);color:var(--foam);padding:10px 16px;border-radius:999px;font:inherit;font-weight:700;cursor:pointer}
+.modes button.on{background:var(--teal);color:var(--deep);border-color:var(--teal)}
+.modes button:disabled{opacity:.3;cursor:not-allowed}
+.dive{font-family:'Comfortaa',system-ui,sans-serif;font-weight:700;font-size:20px;background:linear-gradient(90deg,#19e3c0,#9b6bff);color:#021a24;border:0;border-radius:999px;padding:14px 34px;cursor:pointer;box-shadow:0 0 30px rgba(25,227,192,.4)}
+.dive:focus-visible,.modes button:focus-visible{outline:2px solid var(--amb);outline-offset:4px}
+.recs{display:flex;gap:22px;justify-content:center;margin-top:18px;font-size:13px;color:var(--mist)}
+.recs b{display:block;font-family:'Comfortaa',system-ui,sans-serif;color:var(--foam);font-size:22px}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="hud"><div class="title">Eco<small>ESCUCHA · REPITE · DESCIENDE</small></div><div class="depth"><small>Profundidad</small><b id="depth">0 m</b><small id="zone">Zona iluminada</small></div></div>
+<div class="gauge" id="gauge"><i id="gi" style="top:0"></i><span style="top:0">0 m</span><span style="top:25%">50 m</span><span style="top:50%">100 m</span><span style="top:75%">150 m</span><span style="top:100%">200 m</span></div>
+<div class="status" id="status"></div>
+<div class="menu" id="menu"><div>
+  <h1>Eco</h1>
+  <p id="mp">Cuatro medusas cantan una melodía. Repítela tocándolas en el mismo orden. Cada acierto te hunde diez metros más en el abismo.</p>
+  <div class="modes" id="modes"></div>
+  <button class="dive" id="dive">Sumergirse</button>
+  <div class="recs" id="recs"></div>
+  <p style="font-size:12px;opacity:.7">Teclas 1 · 2 · 3 · 4 o toca las medusas</p>
+</div></div>
+<script>
+const J=[{c:'#19e3c0',n:261.63,name:'turquesa'},{c:'#9b6bff',n:329.63,name:'violeta'},{c:'#ff5fa2',n:392.0,name:'rosa'},{c:'#ffc15e',n:523.25,name:'ámbar'}];
+const MODES=[{id:'cls',n:'Clásico',req:0},{id:'rev',n:'Espejo (al revés)',req:80},{id:'fast',n:'Corriente rápida',req:120}];
+let best=OS.load('best',{cls:0,rev:0,fast:0}),mode='cls',seq=[],inp=0,state='menu',round=0,flash=[0,0,0,0],t=0;
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');let W,H,D;function rs(){D=Math.min(devicePixelRatio||1,2);W=cv.width=innerWidth*D;H=cv.height=innerHeight*D}rs();addEventListener('resize',rs);
+const motes=Array.from({length:120},()=>({x:Math.random(),y:Math.random(),s:Math.random()*2+.5,v:Math.random()*.0003+.0001}));
+const fish=Array.from({length:7},(_,i)=>({x:Math.random(),y:.2+Math.random()*.6,v:(Math.random()*.0006+.0003)*(i%2?1:-1),min:30+i*25}));
+function pos(i){const cols=W>H?4:2;const r=Math.floor(i/cols),c=i%cols;const rows=4/cols;const gx=W/(cols+1),gy=H/(rows+1.2);return[gx*(c+1),gy*(r+1)+H*.06]}
+function jelly(i){const [x0,y0]=pos(i);const j=J[i],f=flash[i];const s=Math.min(W,H)*(W>H?.1:.13)*(1+f*.18);const bob=Math.sin(t*1.4+i*1.7)*s*.12;const x=x0,y=y0+bob;
+ // glow
+ const g=ctx.createRadialGradient(x,y,s*.2,x,y,s*(2.2+f*1.6));g.addColorStop(0,hexA(j.c,.35+f*.5));g.addColorStop(1,hexA(j.c,0));ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,s*(2.2+f*1.6),0,7);ctx.fill();
+ // tentacles
+ ctx.strokeStyle=hexA(j.c,.55+f*.4);ctx.lineWidth=2*D;for(let k=0;k<7;k++){const tx=x-s*.7+k*s*.23;ctx.beginPath();ctx.moveTo(tx,y+s*.1);for(let m=1;m<=10;m++){const yy=y+s*.1+m*s*.16;ctx.lineTo(tx+Math.sin(t*2+k+m*.6+i)*s*.1*(m/5),yy)}ctx.stroke()}
+ // bell
+ const pulse=1+Math.sin(t*2.2+i)*.05;ctx.fillStyle=hexA(j.c,.22+f*.5);ctx.strokeStyle=hexA(j.c,.9);ctx.lineWidth=2.5*D;ctx.beginPath();ctx.moveTo(x-s*.8*pulse,y+s*.15);ctx.bezierCurveTo(x-s*.9*pulse,y-s*.9,x+s*.9*pulse,y-s*.9,x+s*.8*pulse,y+s*.15);
+ for(let k=0;k<6;k++){const a=x+s*.8*pulse-(k+1)*s*1.6*pulse/6;ctx.quadraticCurveTo(a+s*.13*pulse,y+s*.3,a,y+s*.15)}ctx.closePath();ctx.fill();ctx.stroke();
+ ctx.fillStyle=hexA('#ffffff',.25+f*.6);ctx.beginPath();ctx.ellipse(x-s*.25,y-s*.35,s*.18,s*.1,-.5,0,7);ctx.fill();
+ for(let k=0;k<4;k++){ctx.fillStyle=hexA(j.c,.9);ctx.beginPath();ctx.arc(x-s*.45+k*s*.3,y-s*.05,s*.05*(1+f),0,7);ctx.fill()}
+ ctx.fillStyle=hexA('#d9fbf4',.4);ctx.font=`${12*D}px Quicksand, sans-serif`;ctx.textAlign='center';ctx.fillText(i+1,x,y+s*2)}
+function hexA(h,a){const n=parseInt(h.slice(1),16);return`rgba(${n>>16},${n>>8&255},${n&255},${a})`}
+function draw(){t+=.016;const dep=Math.min(1,round*10/200);const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,lerpC([10,74,92],[2,10,20],dep));g.addColorStop(1,lerpC([2,26,36],[0,2,6],dep));ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+ // light rays fade with depth
+ if(dep<.6){ctx.save();ctx.globalAlpha=(.6-dep)*.25;for(let i=0;i<5;i++){const x=W*(.1+i*.2)+Math.sin(t*.3+i)*40*D;const gr=ctx.createLinearGradient(x,0,x+W*.1,H);gr.addColorStop(0,'rgba(217,251,244,.6)');gr.addColorStop(1,'rgba(217,251,244,0)');ctx.fillStyle=gr;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x+60*D,0);ctx.lineTo(x+W*.12+120*D,H);ctx.lineTo(x+W*.12,H);ctx.fill()}ctx.restore()}
+ for(const m of motes){m.y-=m.v;if(m.y<0)m.y=1;ctx.fillStyle=`rgba(217,251,244,${.15+dep*.3})`;ctx.fillRect(m.x*W+Math.sin(t+m.y*10)*6,m.y*H,m.s*D,m.s*D)}
+ for(const f of fish){if(round*10<f.min)continue;f.x+=f.v;if(f.x>1.1)f.x=-.1;if(f.x<-.1)f.x=1.1;const x=f.x*W,y=f.y*H+Math.sin(t+f.min)*10*D,dir=Math.sign(f.v);ctx.fillStyle='rgba(20,40,50,.9)';ctx.beginPath();ctx.ellipse(x,y,18*D,8*D,0,0,7);ctx.fill();ctx.beginPath();ctx.moveTo(x-dir*16*D,y);ctx.lineTo(x-dir*28*D,y-8*D);ctx.lineTo(x-dir*28*D,y+8*D);ctx.fill();ctx.fillStyle='#ffc15e';ctx.shadowColor='#ffc15e';ctx.shadowBlur=14*D;ctx.beginPath();ctx.arc(x+dir*26*D,y-12*D,3*D,0,7);ctx.fill();ctx.shadowBlur=0;ctx.strokeStyle='rgba(255,193,94,.5)';ctx.lineWidth=D;ctx.beginPath();ctx.moveTo(x+dir*12*D,y-6*D);ctx.quadraticCurveTo(x+dir*22*D,y-18*D,x+dir*26*D,y-12*D);ctx.stroke()}
+ for(let i=0;i<4;i++){jelly(i);flash[i]*=.93}requestAnimationFrame(draw)}
+function lerpC(a,b,k){return`rgb(${a.map((v,i)=>Math.round(v+(b[i]-v)*k)).join(',')})`}
+let ac;function sing(i,d=.45){flash[i]=1;try{ac=ac||new AudioContext();const t0=ac.currentTime;[1,2,3].forEach((h,k)=>{const o=ac.createOscillator(),g=ac.createGain();o.type='sine';o.frequency.value=J[i].n*h;g.gain.setValueAtTime(0.0001,t0);g.gain.exponentialRampToValueAtTime([.12,.03,.015][k],t0+.02);g.gain.exponentialRampToValueAtTime(.0001,t0+d+.4);o.connect(g).connect(ac.destination);o.start(t0);o.stop(t0+d+.5)})}catch(e){}}
+function buzz(){try{ac=ac||new AudioContext();const o=ac.createOscillator(),g=ac.createGain();o.type='sawtooth';o.frequency.value=90;g.gain.value=.08;g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+.6);o.connect(g).connect(ac.destination);o.start();o.stop(ac.currentTime+.6)}catch(e){}}
+const status=h=>document.getElementById('status').innerHTML=h;
+function zone(m){return m<50?'Zona iluminada':m<100?'Zona crepuscular':m<150?'Zona de medianoche':m<200?'Zona abisal':'Fosa hadal'}
+function hud(){const m=round*10;document.getElementById('depth').textContent=m+' m';document.getElementById('zone').textContent=zone(m);document.getElementById('gi').style.top=Math.min(100,m/2)+'%'}
+function speed(){return mode==='fast'?Math.max(180,420-round*18):Math.max(260,620-round*20)}
+async function play(){state='show';status('Escucha a las medusas…');await wait(700);for(const i of seq){sing(i,speed()/1000);await wait(speed())}state='input';inp=0;status(mode==='rev'?'Tu turno: <em>al revés</em>':'Tu turno')}
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+function press(i){if(state!=='input')return;sing(i,.3);const want=mode==='rev'?seq[seq.length-1-inp]:seq[inp];if(i!==want){fail();return}inp++;if(inp===seq.length){round++;hud();const m=round*10;OS.xp(3+Math.floor(round/3),'Descenso a '+m+' m');
+ if(m===50||m===100||m===150||m===200){status(`<em>¡${zone(m)}!</em> Nuevas criaturas a la vista`);OS.xp(20,'Alcanzaste la '+zone(m).toLowerCase())}else status('¡Perfecto! Bajando…');
+ if(m>=100)OS.achieve('eco_100','Medianoche','Llegaste a 100 m en Eco');if(m>=200)OS.achieve('eco_200','Explorador abisal','Llegaste a 200 m en Eco');
+ seq.push(Math.random()*4|0);setTimeout(play,900)}}
+function fail(){state='menu';buzz();for(let k=0;k<4;k++)flash[k]=.6;const m=round*10;const nb=m>(best[mode]||0);if(nb){best[mode]=m;OS.save('best',best)}
+ document.getElementById('mp').innerHTML=`El eco se rompió a <b>${m} m</b>${nb?' — ¡nuevo récord!':''}. La secuencia tenía ${seq.length} notas.`;document.getElementById('dive').textContent='Volver a bucear';renderMenu();setTimeout(()=>document.getElementById('menu').hidden=false,700);status('')}
+function renderMenu(){const mx=Math.max(...Object.values(best));document.getElementById('modes').innerHTML=MODES.map(x=>`<button data-m="${x.id}" class="${x.id===mode?'on':''}" ${mx<x.req?'disabled':''} title="${mx<x.req?'Se desbloquea al llegar a '+x.req+' m':''}">${x.n}${mx<x.req?' · '+x.req+' m':''}</button>`).join('');document.querySelectorAll('#modes button').forEach(b=>b.onclick=()=>{mode=b.dataset.m;renderMenu()});
+ document.getElementById('recs').innerHTML=MODES.map(x=>`<span>${x.n.split(' ')[0]}<b>${best[x.id]||0} m</b></span>`).join('')}
+document.getElementById('dive').onclick=()=>{seq=[Math.random()*4|0];round=0;hud();document.getElementById('menu').hidden=true;try{ac=ac||new AudioContext();ac.resume()}catch(e){}play()};
+cv.addEventListener('pointerdown',e=>{const x=e.clientX*D,y=e.clientY*D;const s=Math.min(W,H)*(W>H?.1:.13);for(let i=0;i<4;i++){const [px,py]=pos(i);if(Math.hypot(x-px,y-py)<s*1.3){press(i);return}}});
+addEventListener('keydown',e=>{const n=+e.key;if(n>=1&&n<=4)press(n-1);if(e.key==='Enter'&&!document.getElementById('menu').hidden)document.getElementById('dive').click()});
+renderMenu();hud();draw();
+</script>
+</body>
+</html>

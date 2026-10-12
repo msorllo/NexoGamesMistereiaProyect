@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="es" data-app="excava">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Yacimiento</title>
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=IBM+Plex+Sans+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ochre:#d99a5b;--soil:#3b2416;--parch:#f4e7cf;--teal:#2a7f7a;--rust:#b4532a;--mut:#8a6a52}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#e8b77c;color:var(--soil);font-family:'IBM Plex Sans Condensed',system-ui,sans-serif;overflow:hidden}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.top{position:fixed;top:14px;left:16px;right:16px;display:flex;justify-content:space-between;gap:12px;align-items:flex-start;pointer-events:none;flex-wrap:wrap}
+.tag{background:var(--parch);border:2px solid var(--soil);border-radius:4px;padding:8px 14px;box-shadow:4px 4px 0 var(--soil);pointer-events:auto}
+h1{font-family:'Alfa Slab One',Georgia,serif;font-weight:400;font-size:clamp(26px,4vw,40px);margin:0;line-height:1;color:var(--soil)}
+.tag small{display:block;font-size:13px;font-weight:700;color:var(--rust);letter-spacing:.06em;text-transform:uppercase}
+.meter{background:var(--parch);border:2px solid var(--soil);border-radius:4px;padding:8px 12px;box-shadow:4px 4px 0 var(--soil);min-width:240px;pointer-events:auto}
+.meter .row{display:flex;justify-content:space-between;font-weight:700;font-size:14px}
+.meter .row b{font-family:'Alfa Slab One';font-weight:400;font-size:20px}
+.en{height:12px;border:2px solid var(--soil);margin-top:4px;background:#fff}.en i{display:block;height:100%;background:repeating-linear-gradient(90deg,var(--rust) 0 8px,#c96a3d 8px 10px);transition:width .3s}
+.tools{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:8px;background:var(--parch);border:2px solid var(--soil);border-radius:6px;padding:8px;box-shadow:4px 4px 0 var(--soil);max-width:calc(100% - 32px);flex-wrap:wrap;justify-content:center}
+.tool{font:inherit;font-weight:700;font-size:14px;border:2px solid var(--soil);background:#fff;color:var(--soil);border-radius:4px;padding:8px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;min-width:88px;line-height:1.1}
+.tool small{font-weight:400;font-size:11px;color:var(--mut)}
+.tool.on{background:var(--soil);color:var(--parch)}.tool.on small{color:#e8c9a0}
+.tool:disabled{opacity:.4;cursor:not-allowed}
+.tool:focus-visible,.btn:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+.hint{position:fixed;left:16px;bottom:96px;background:rgba(244,231,207,.94);border-left:5px solid var(--teal);padding:10px 14px;max-width:340px;font-size:15px;line-height:1.35;box-shadow:3px 3px 0 rgba(59,36,22,.4)}
+.hint b{color:var(--teal)}
+.card{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(59,36,22,.5);padding:16px;z-index:5}
+.card[hidden]{display:none}
+.card .in{background:var(--parch);border:3px solid var(--soil);box-shadow:8px 8px 0 var(--soil);padding:20px 24px;max-width:420px;width:100%;text-align:center}
+.card h2{font-family:'Alfa Slab One';font-weight:400;font-size:30px;margin:0}
+.card .era{font-weight:700;color:var(--rust);text-transform:uppercase;letter-spacing:.1em;font-size:12px;margin:4px 0 10px}
+.card img{width:180px;height:180px;display:block;margin:0 auto;image-rendering:auto}
+.card p{line-height:1.45;margin:10px 0}
+.rar{display:inline-block;font-weight:700;font-size:12px;padding:3px 8px;border:2px solid var(--soil);margin-bottom:8px}
+.btn{font:inherit;font-weight:700;font-size:15px;border:2px solid var(--soil);background:var(--teal);color:#fff;padding:10px 18px;cursor:pointer;box-shadow:3px 3px 0 var(--soil);margin:4px}
+.btn.alt{background:#fff;color:var(--soil)}
+.mus{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin:12px 0;text-align:center;font-size:13px;font-weight:700}
+.mus div{border:2px solid var(--soil);background:#fff;padding:6px}
+.mus img{width:90px;height:90px;display:block;margin:0 auto}
+.mus .no{filter:brightness(0) opacity(.25)}
+.mus small{display:block;font-weight:400;color:var(--mut)}
+.sites{display:flex;flex-direction:column;gap:8px;margin:12px 0}
+.site{font:inherit;text-align:left;border:2px solid var(--soil);background:#fff;padding:10px 12px;cursor:pointer;display:flex;justify-content:space-between;gap:10px;align-items:center;color:var(--soil)}
+.site b{font-family:'Alfa Slab One';font-weight:400;font-size:18px;display:block}
+.site:disabled{opacity:.45;cursor:not-allowed}
+.load{position:fixed;inset:0;display:grid;place-items:center;font-family:'Alfa Slab One';font-size:24px;color:var(--soil)}
+@media (max-width:720px){.meter{min-width:0}.hint{bottom:150px;right:16px;max-width:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="load" id="load">Montando el campamento…</div>
+<div class="top"><div class="tag"><h1>Yacimiento</h1><small id="siteN"></small></div><div class="meter"><div class="row"><span>Energía</span><b id="enN">45</b></div><div class="en"><i id="en"></i></div><div class="row" style="margin-top:6px"><span>Hallazgos</span><b id="fdN">0/0</b></div></div></div>
+<div class="hint" id="hint">Usa el <b>pico</b> para retirar tierra. Cuando veas <b>destellos</b> en una cara, hay algo dentro: cámbiate al <b>pincel</b> para sacarlo intacto.</div>
+<div class="tools"><button class="tool on" data-t="pico">Pico<small>1 energía</small></button><button class="tool" data-t="pincel">Pincel<small>extrae · sondea</small></button><button class="tool" data-t="radar" id="radarB">Radar<small id="rdN">3 usos</small></button><button class="tool" id="museoB">Museo<small id="muN">0/7</small></button></div>
+<div class="card" id="card" hidden><div class="in" id="cardIn"></div></div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script>const GLB="__GLB__";</script>
+<script>
+function b64(s){const b=atob(s),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a.buffer}
+const FINDS={Craneo:{n:'Cráneo de terópodo',era:'Cretácico · 70 Ma',r:'Legendario',pts:120,d:'Un depredador bípedo de dientes serrados. Encontrar el cráneo completo es rarísimo.'},Amonites:{n:'Amonites',era:'Jurásico · 180 Ma',r:'Común',pts:30,d:'Molusco marino con concha en espiral; sus cámaras le servían para flotar.'},Trilobites:{n:'Trilobites',era:'Cámbrico · 510 Ma',r:'Poco común',pts:45,d:'Artrópodo marino de tres lóbulos. Uno de los primeros animales con ojos complejos.'},Ambar:{n:'Ámbar con mosquito',era:'Eoceno · 44 Ma',r:'Raro',pts:80,d:'Resina fósil que atrapó a un insecto hace millones de años.'},Anfora:{n:'Ánfora romana',era:'Siglo I d. C.',r:'Poco común',pts:50,d:'Vasija para transportar vino y aceite por todo el Mediterráneo.'},Moneda:{n:'Áureo de oro',era:'Imperio romano',r:'Raro',pts:90,d:'Moneda de oro acuñada con el perfil de un emperador.'},Geoda:{n:'Geoda de amatista',era:'Mioceno · 20 Ma',r:'Poco común',pts:40,d:'Roca hueca tapizada de cristales que crecieron gota a gota.'}};
+const SITES=[{id:'gobi',n:'Desierto de Gobi',need:0,pool:['Craneo','Trilobites','Geoda','Amonites'],strata:['#e0ae70','#c98b4f','#b5763f','#9a5f33','#7d4a2a','#5c3520'],sky:'#f0c48a'},
+ {id:'costa',n:'Costa jurásica',need:2,pool:['Amonites','Trilobites','Ambar','Geoda'],strata:['#7fae5a','#b9a47a','#9c8a6a','#7d7166','#5f5a5c','#45424a'],sky:'#bfe0e8'},
+ {id:'roma',n:'Ruinas romanas',need:4,pool:['Anfora','Moneda','Geoda','Craneo'],strata:['#8fb86a','#a67c52','#c9b79a','#8d6a4a','#6f5846','#4f3c30'],sky:'#f3d9b1'}];
+const W=9,D=9,HL=6;let S=OS.load('s',null)||{museum:{},exp:0,best:0};let site=SITES[0],vox,finds,energy,radar,tool='pico',found=[],pts=0,active=false;
+const LIB={};let R,scene,camera,controls,clock=new THREE.Clock(),inst,dummy=new THREE.Object3D(),sparkles=[],dust=[],shows=[],thumbs={};
+function get(n){return LIB[n].clone(true)}
+const idx=(x,y,z)=>x+z*W+y*W*D;
+function setup(){R=new THREE.WebGLRenderer({canvas:document.getElementById('c'),antialias:true,preserveDrawingBuffer:false});R.setPixelRatio(Math.min(devicePixelRatio,2));R.outputEncoding=THREE.sRGBEncoding;R.toneMapping=THREE.ACESFilmicToneMapping;R.shadowMap.enabled=true;R.shadowMap.type=THREE.PCFSoftShadowMap;R.toneMappingExposure=.8;
+ scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(40,1,.1,200);controls=new THREE.OrbitControls(camera,R.domElement);controls.target.set(0,2,0);controls.enablePan=false;controls.minDistance=9;controls.maxDistance=24;controls.maxPolarAngle=1.25;controls.enableDamping=true;
+ scene.add(new THREE.HemisphereLight('#fff1d6','#6b4326',.45));const sun=new THREE.DirectionalLight('#fff0d0',1.25);sun.position.set(8,16,6);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-10,right:10,top:10,bottom:-10});scene.add(sun);
+ const gs=new THREE.Shape();gs.absarc(0,0,40,0,Math.PI*2,false);const hole=new THREE.Path();hole.moveTo(-W/2,-D/2);hole.lineTo(W/2,-D/2);hole.lineTo(W/2,D/2);hole.lineTo(-W/2,D/2);hole.lineTo(-W/2,-D/2);gs.holes.push(hole);const ground=new THREE.Mesh(new THREE.ShapeGeometry(gs,48),new THREE.MeshStandardMaterial({color:'#c98b4f',roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=HL-.5;ground.receiveShadow=true;scene.add(ground);scene.userData.ground=ground;
+ // campamento
+ const tent=new THREE.Mesh(new THREE.ConeGeometry(2,2.6,4),new THREE.MeshStandardMaterial({color:'#e9dcc0',roughness:.9,flatShading:true}));tent.position.set(-8,HL+.8,-6);tent.rotation.y=.8;tent.castShadow=true;scene.add(tent);
+ const pico=get('Pico');pico.position.set(6.2,HL-.5,-4);pico.rotation.set(.2,.4,.5);pico.scale.setScalar(1.8);scene.add(pico);const br=get('Pincel');br.position.set(6.8,HL-.5,-3);br.rotation.set(1.4,0,.3);br.scale.setScalar(1.8);scene.add(br);
+ for(let i=0;i<14;i++){const s=new THREE.Mesh(new THREE.DodecahedronGeometry(.3+Math.random()*.6),new THREE.MeshStandardMaterial({color:'#a07048',flatShading:true}));const a=Math.random()*6.28,d=8+Math.random()*10;s.position.set(Math.cos(a)*d,HL-.4,Math.sin(a)*d);s.castShadow=true;scene.add(s)}
+ const rope=new THREE.MeshStandardMaterial({color:'#e2c67a'});[[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([a,b])=>{const p=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,1.4),new THREE.MeshStandardMaterial({color:'#6b4326'}));p.position.set(a*(W/2+.6),HL+.2,b*(D/2+.6));scene.add(p)});
+ for(const [x1,z1,x2,z2] of [[-1,-1,1,-1],[1,-1,1,1],[1,1,-1,1],[-1,1,-1,-1]]){const L=Math.hypot((x2-x1)*(W/2+.6),(z2-z1)*(D/2+.6));const r=new THREE.Mesh(new THREE.CylinderGeometry(.02,.02,L),rope);r.position.set((x1+x2)/2*(W/2+.6),HL+.7,(z1+z2)/2*(D/2+.6));r.rotation.z=x1!==x2?Math.PI/2:0;r.rotation.x=z1!==z2?Math.PI/2:0;scene.add(r)}
+ const geo=new THREE.BoxGeometry(.98,.98,.98);inst=new THREE.InstancedMesh(geo,new THREE.MeshStandardMaterial({roughness:.95}),W*D*HL);inst.castShadow=inst.receiveShadow=true;scene.add(inst);
+ addEventListener('resize',resize);resize();let down=null;R.domElement.addEventListener('pointerdown',e=>down=[e.clientX,e.clientY]);R.domElement.addEventListener('pointerup',e=>{if(down&&Math.hypot(e.clientX-down[0],e.clientY-down[1])<6)click(e);down=null})}
+function resize(){R.setSize(innerWidth,innerHeight,false);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix()}
+function pos(x,y,z){return new THREE.Vector3(x-(W-1)/2,y,z-(D-1)/2)}
+function rng(seed){let s=seed;return()=>(s=(s*16807)%2147483647)/2147483647}
+function start(si){site=SITES[si];active=true;energy=45;radar=3;found=[];pts=0;shows.forEach(s=>scene.remove(s));shows=[];sparkles.forEach(s=>scene.remove(s.m));sparkles=[];
+ scene.background=new THREE.Color(site.sky);scene.fog=new THREE.Fog(site.sky,30,70);scene.userData.ground.material.color.set(site.strata[0]).convertSRGBToLinear();
+ vox=new Uint8Array(W*D*HL);const hp=new Uint8Array(W*D*HL);for(let y=0;y<HL;y++)for(let z=0;z<D;z++)for(let x=0;x<W;x++){vox[idx(x,y,z)]=1;hp[idx(x,y,z)]=y<2?2:1}vox.hp=hp;
+ const r=Math.random;finds={};const n=3+(S.exp>2?1:0);for(let i=0;i<n;i++){let x,y,z,k;do{x=1+(r()*(W-2)|0);z=1+(r()*(D-2)|0);y=r()*(HL-2)|0;k=idx(x,y,z)}while(finds[k]);const pool=site.pool;const rare=r();finds[k]=pool[rare<.12?0:1+((r()*(pool.length-1))|0)]}
+ const col=new THREE.Color();for(let y=0;y<HL;y++)for(let z=0;z<D;z++)for(let x=0;x<W;x++){const k=idx(x,y,z);dummy.position.copy(pos(x,y,z));dummy.scale.setScalar(1);dummy.updateMatrix();inst.setMatrixAt(k,dummy.matrix);col.set(site.strata[HL-1-y]).convertSRGBToLinear();col.offsetHSL(0,0,(Math.random()-.5)*.05);inst.setColorAt(k,col)}
+ inst.instanceMatrix.needsUpdate=true;inst.instanceColor.needsUpdate=true;
+ camera.position.set(7,HL+9,10);controls.target.set(0,HL-2,0);controls.update();document.getElementById('siteN').textContent=site.n+' · expedición '+(S.exp+1);ui();document.getElementById('card').hidden=true}
+function exposed(k){const x=k%W,z=Math.floor(k/W)%D,y=Math.floor(k/(W*D));return[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]].some(([a,b,c])=>{const X=x+a,Y=y+b,Z=z+c;if(X<0||Z<0||X>=W||Z>=D||Y<0)return false;if(Y>=HL)return true;return!vox[idx(X,Y,Z)]})}
+function remove(k){vox[k]=0;dummy.position.set(0,-99,0);dummy.scale.setScalar(0);dummy.updateMatrix();inst.setMatrixAt(k,dummy.matrix);inst.instanceMatrix.needsUpdate=true;const x=k%W,z=Math.floor(k/W)%D,y=Math.floor(k/(W*D));puff(pos(x,y,z));refreshSparkles()}
+function refreshSparkles(){sparkles.forEach(s=>scene.remove(s.m));sparkles=[];for(const k in finds){if(vox[k]&&exposed(+k)){const x=k%W,z=Math.floor(k/W)%D,y=Math.floor(k/(W*D));const m=new THREE.Mesh(new THREE.OctahedronGeometry(.12),new THREE.MeshBasicMaterial({color:'#fff6c0'}));m.position.copy(pos(x,y,z)).add(new THREE.Vector3(0,.62,0));scene.add(m);sparkles.push({m,k})}}}
+function puff(p){for(let i=0;i<10;i++){const m=new THREE.Mesh(new THREE.BoxGeometry(.12,.12,.12),new THREE.MeshStandardMaterial({color:site.strata[2]}));m.position.copy(p);m.userData.v=new THREE.Vector3((Math.random()-.5)*3,2+Math.random()*2,(Math.random()-.5)*3);m.userData.l=1;scene.add(m);dust.push(m)}}
+const ray=new THREE.Raycaster(),mv=new THREE.Vector2();
+function click(e){if(!active||energy<=0)return;mv.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);ray.setFromCamera(mv,camera);const h=ray.intersectObject(inst)[0];if(!h)return;const k=h.instanceId;if(!vox[k])return;
+ if(tool==='radar'){if(radar<=0)return;radar--;energy--;const ks=Object.keys(finds).filter(f=>vox[f]);if(ks.length){const x=k%W,z=Math.floor(k/W)%D;let best=ks[0],bd=1e9;ks.forEach(f=>{const fx=f%W,fz=Math.floor(f/W)%D;const d=Math.abs(fx-x)+Math.abs(fz-z);if(d<bd){bd=d;best=f}});const bx=best%W,bz=Math.floor(best/W)%D;const beam=new THREE.Mesh(new THREE.CylinderGeometry(.45,.45,14,16,1,true),new THREE.MeshBasicMaterial({color:'#2ad4c8',transparent:true,opacity:.35,depthWrite:false,side:THREE.DoubleSide}));beam.position.copy(pos(bx,HL/2,bz));beam.userData.l=2.2;scene.add(beam);dust.push(beam);hint('El radar marca una <b>columna</b>: el hallazgo más cercano está bajo ella.')}ping(660);ui();endCheck();return}
+ if(tool==='pincel'){energy--;if(finds[k]){if(!exposed(k)){hint('Aún está enterrado del todo. Destapa alguna cara con el pico.');energy++;return}extract(k,false)}else{const x=k%W,z=Math.floor(k/W)%D,y=Math.floor(k/(W*D));let md=99;for(const f in finds){if(!vox[f])continue;const fx=f%W,fz=Math.floor(f/W)%D,fy=Math.floor(f/(W*D));md=Math.min(md,Math.abs(fx-x)+Math.abs(fz-z)+Math.abs(fy-y))}hint(md<=2?'Sondeo: <b>¡caliente!</b> Hay algo muy cerca.':md<=4?'Sondeo: <b>templado</b>. No muy lejos.':'Sondeo: <b>frío</b>. Prueba en otra zona.');ping(md<=2?880:md<=4?560:320)}ui();endCheck();return}
+ // pico
+ energy--;if(finds[k]){extract(k,true)}else{vox.hp[k]--;if(vox.hp[k]<=0)remove(k);else{puff(h.point);hint('Roca dura: necesita otro golpe.')}thud()}ui();endCheck()}
+function extract(k,damaged){const n=finds[k];delete finds[k];remove(k);const f=FINDS[n];const p=damaged?Math.round(f.pts/2):f.pts;pts+=p;found.push({n,damaged});const isNew=!S.museum[n]||S.museum[n]==='d'&&!damaged;S.museum[n]=damaged&&S.museum[n]!=='ok'?'d':'ok';OS.save('s',S);
+ const x=k%W,z=Math.floor(k/W)%D,y=Math.floor(k/(W*D));const o=get(n);o.scale.setScalar(1.6);o.position.copy(pos(x,y,z));o.userData.rise=pos(x,y,z).add(new THREE.Vector3(0,HL-y+1.2,0));scene.add(o);shows.push(o);
+ const light=new THREE.PointLight('#ffe6a0',3,6);o.add(light);[523,659,784,1046].forEach((f,i)=>setTimeout(()=>ping(f),i*90));
+ OS.xp(Math.round(p/4)+(isNew?15:0),(damaged?'Hallazgo dañado: ':'Hallazgo: ')+f.n);if(!damaged)OS.achieve('exc_clean','Manos de cirujano','Extrajiste un fósil intacto con el pincel');if(n==='Craneo'&&!damaged)OS.achieve('exc_rex','Cazador de dinosaurios','Encontraste un cráneo de terópodo intacto');if(Object.values(S.museum).filter(v=>v==='ok').length===7)OS.achieve('exc_all','Conservador del museo','Las 7 piezas intactas en tu museo');
+ setTimeout(()=>showCard(n,damaged,p,isNew),900)}
+function showCard(n,damaged,p,isNew){const f=FINDS[n];document.getElementById('cardIn').innerHTML=`<span class="rar">${f.r}</span><h2>${f.n}</h2><div class="era">${f.era}</div><img src="${thumbs[n]||''}" alt="${f.n}"><p>${f.d}</p><p><b>${damaged?'Dañado por el pico · ':''}+${p} puntos</b>${isNew?' · <b style="color:#2a7f7a">¡Nueva pieza para el museo!</b>':''}</p><button class="btn" id="cOk">Seguir excavando</button>`;document.getElementById('card').hidden=false;document.getElementById('cOk').onclick=()=>{document.getElementById('card').hidden=true;endCheck()}}
+function endCheck(){if(!document.getElementById('card').hidden)return;const left=Object.keys(finds).length;if(active&&(energy<=0||left===0)){active=false;S.exp++;S.best=Math.max(S.best,pts);OS.save('s',S);OS.xp(20+found.length*5,'Expedición en '+site.n);
+ setTimeout(()=>{document.getElementById('cardIn').innerHTML=`<h2>${left===0?'¡Yacimiento agotado!':'Sin energía'}</h2><div class="era">${site.n}</div><p>${found.length} hallazgos · <b>${pts} puntos</b>${pts>=S.best&&pts>0?' · ¡récord!':''}</p><div class="mus">${found.map(f=>`<div><img src="${thumbs[f.n]}" alt=""><span>${FINDS[f.n].n}</span><small>${f.damaged?'dañado':'intacto'}</small></div>`).join('')||'<div>Nada esta vez</div>'}</div><button class="btn" id="again">Nueva expedición</button>`;document.getElementById('card').hidden=false;document.getElementById('again').onclick=sitesMenu},600)}}
+function sitesMenu(){const have=Object.keys(S.museum).length;document.getElementById('cardIn').innerHTML=`<h2>Elige yacimiento</h2><div class="era">Tu museo: ${have}/7 piezas</div><div class="sites">${SITES.map((s,i)=>`<button class="site" data-i="${i}" ${have<s.need?'disabled':''}><span><b>${s.n}</b>${s.pool.map(p=>FINDS[p].n).slice(0,3).join(' · ')}</span><span>${have<s.need?'Necesitas '+s.need+' piezas':'Ir →'}</span></button>`).join('')}</div>`;document.getElementById('card').hidden=false;document.querySelectorAll('.site').forEach(b=>b.onclick=()=>start(+b.dataset.i))}
+function museum(){const keys=Object.keys(FINDS);document.getElementById('cardIn').innerHTML=`<h2>Tu museo</h2><div class="era">${Object.keys(S.museum).length}/7 piezas · ${S.exp} expediciones</div><div class="mus">${keys.map(k=>`<div><img class="${S.museum[k]?'':'no'}" src="${thumbs[k]}" alt=""><span>${S.museum[k]?FINDS[k].n:'???'}</span><small>${S.museum[k]==='ok'?'intacta':S.museum[k]==='d'?'dañada':FINDS[k].r}</small></div>`).join('')}</div><button class="btn" id="cOk">Cerrar</button> <button class="btn alt" id="cSites">Cambiar de yacimiento</button>`;document.getElementById('card').hidden=false;document.getElementById('cOk').onclick=()=>{document.getElementById('card').hidden=true;if(!active)sitesMenu()};document.getElementById('cSites').onclick=sitesMenu}
+function hint(h){document.getElementById('hint').innerHTML=h}
+function ui(){document.getElementById('enN').textContent=Math.max(0,energy);document.getElementById('en').style.width=Math.max(0,energy)/45*100+'%';const tot=found.length+Object.keys(finds).length;document.getElementById('fdN').textContent=found.length+'/'+tot;document.getElementById('rdN').textContent=radar+' usos';document.getElementById('radarB').disabled=radar<=0;document.getElementById('muN').textContent=Object.keys(S.museum).length+'/7'}
+document.querySelectorAll('.tool[data-t]').forEach(b=>b.onclick=()=>{tool=b.dataset.t;document.querySelectorAll('.tool[data-t]').forEach(x=>x.classList.toggle('on',x===b))});document.getElementById('museoB').onclick=museum;
+let ac;function tone(f,d,type='sine',v=.06){try{ac=ac||new AudioContext();const o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d);o.connect(g).connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}}
+function thud(){tone(90+Math.random()*30,.18,'triangle',.12);tone(1800,.03,'square',.02)}function ping(f){tone(f,.35,'sine',.05)}
+function makeThumbs(){const r=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});r.setSize(180,180);r.outputEncoding=THREE.sRGBEncoding;r.toneMapping=THREE.ACESFilmicToneMapping;const s=new THREE.Scene();s.add(new THREE.HemisphereLight('#fff','#8a6a52',1));const d=new THREE.DirectionalLight('#fff',1.4);d.position.set(2,3,2);s.add(d);const c=new THREE.PerspectiveCamera(35,1,.01,50);
+ for(const n in FINDS){const o=get(n);s.add(o);const b=new THREE.Box3().setFromObject(o),sz=b.getSize(new THREE.Vector3()).length(),ct=b.getCenter(new THREE.Vector3());c.position.copy(ct).add(new THREE.Vector3(.6,.5,1).normalize().multiplyScalar(sz*1.5));c.lookAt(ct);r.render(s,c);thumbs[n]=r.domElement.toDataURL();s.remove(o)}r.dispose()}
+function loop(){requestAnimationFrame(loop);const dt=Math.min(.05,clock.getDelta()),t=clock.elapsedTime;
+ sparkles.forEach(s=>{s.m.rotation.y+=dt*3;s.m.scale.setScalar(.8+Math.sin(t*6+s.k)*.4)});
+ dust.forEach(m=>{m.userData.l-=dt;if(m.userData.v){m.userData.v.y-=9*dt;m.position.addScaledVector(m.userData.v,dt);m.rotation.x+=dt*5}else m.material.opacity=Math.max(0,m.userData.l/2.2)*.35;if(m.userData.l<=0){scene.remove(m);m.dead=1}});dust=dust.filter(m=>!m.dead);
+ shows.forEach(o=>{if(o.userData.rise){o.position.lerp(o.userData.rise,.05);o.rotation.y+=dt*1.2}});
+ controls.update();R.render(scene,camera)}
+new THREE.GLTFLoader().parse(b64(GLB),'',g=>{g.scene.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});[...g.scene.children].forEach(c=>LIB[c.name]=c);document.getElementById('load').remove();setup();makeThumbs();start(0);loop()},()=>document.getElementById('load').textContent='No se pudieron cargar los modelos 3D.');
+</script>
+</body>
+</html>

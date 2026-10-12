@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="es" data-app="tiza">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tiza</title>
+<link href="https://fonts.googleapis.com/css2?family=Cabin+Sketch:wght@400;700&family=Patrick+Hand&display=swap" rel="stylesheet">
+<style>
+:root{--board:#2b4a3e;--board2:#23402f;--wood:#8a5a36;--chalk:#f2f0e6;--yel:#f4e285;--pink:#f5a3b8;--blue:#a7d3f0}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#5b3a22;overflow:hidden;font-family:'Patrick Hand',cursive,sans-serif;color:var(--chalk)}
+.frame{position:fixed;inset:10px;border-radius:6px;background:linear-gradient(135deg,#9c6a40,#6e4526);padding:14px;box-shadow:inset 0 2px 0 #c08a5a,0 10px 30px rgba(0,0,0,.5)}
+.board{position:relative;width:100%;height:100%;border-radius:3px;overflow:hidden;background:radial-gradient(ellipse at 30% 20%,#35584a 0%,var(--board) 45%,var(--board2) 100%);box-shadow:inset 0 0 60px rgba(0,0,0,.45)}
+.board::before{content:'';position:absolute;inset:0;background:repeating-radial-gradient(circle at 20% 30%,rgba(255,255,255,.018) 0 2px,transparent 2px 5px),repeating-linear-gradient(8deg,rgba(255,255,255,.025) 0 60px,transparent 60px 140px);pointer-events:none}
+.smudge{position:absolute;border-radius:50%;background:rgba(255,255,255,.05);filter:blur(18px);pointer-events:none}
+.hud{position:absolute;top:10px;left:16px;right:16px;display:flex;justify-content:space-between;gap:10px;font-size:22px;z-index:3;flex-wrap:wrap}
+.hud b{font-family:'Cabin Sketch',cursive;font-size:30px;color:var(--yel);margin-left:6px}
+.lives{font-family:'Cabin Sketch','Comic Sans MS',cursive;font-size:28px;letter-spacing:4px;color:var(--pink)}
+.word{position:absolute;font-size:30px;white-space:nowrap;text-shadow:0 0 1px #fff,0 0 6px rgba(255,255,255,.35);transform:translateX(-50%);letter-spacing:.02em;transition:opacity .2s}
+.word .done{color:var(--yel);text-shadow:0 0 8px rgba(244,226,133,.8)}
+.word.gold{color:var(--yel)}.word.slow{color:var(--blue)}.word.bomb{color:var(--pink)}
+.word.target{text-decoration:underline wavy rgba(244,226,133,.6);text-underline-offset:6px}
+.word small{position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:13px;opacity:.85}
+.floor{position:absolute;left:0;right:0;bottom:62px;border-top:2px dashed rgba(242,240,230,.35)}
+.tray{position:absolute;left:0;right:0;bottom:0;height:40px;background:linear-gradient(#7a4e2e,#5b3a22);box-shadow:0 -4px 8px rgba(0,0,0,.3)}
+.stick{position:absolute;bottom:14px;height:9px;border-radius:4px}
+.typed{position:absolute;left:50%;bottom:72px;transform:translateX(-50%);font-size:34px;color:var(--yel);min-height:44px;font-family:'Cabin Sketch','Comic Sans MS',cursive}
+canvas#dust{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2}
+.panel{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:5;background:rgba(35,64,47,.86);padding:16px;text-align:center}
+.panel[hidden]{display:none}
+.panel h1{font-family:'Cabin Sketch',cursive;font-weight:700;font-size:clamp(70px,16vw,150px);margin:0;line-height:.9;text-shadow:0 0 2px #fff,0 0 20px rgba(255,255,255,.25)}
+.panel p{font-size:22px;margin:8px 0;max-width:520px;margin-inline:auto;line-height:1.3}
+.legend{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;font-size:19px;margin:14px 0}
+.go{font-family:'Cabin Sketch','Comic Sans MS',cursive;font-weight:700;font-size:34px;background:none;color:var(--yel);border:3px solid var(--yel);border-radius:40% 8% 38% 10%/12% 40% 10% 38%;padding:8px 36px;cursor:pointer;margin-top:10px}
+.go:hover{background:rgba(244,226,133,.12)}
+.go:focus-visible{outline:2px dashed var(--chalk);outline-offset:6px}
+.ms{display:flex;flex-direction:column;gap:4px;font-size:19px;margin:12px auto;max-width:420px;text-align:left}
+.ms div::before{content:'☐ ';color:var(--pink)}.ms div.ok::before{content:'☑ ';color:var(--yel)}.ms div.ok{text-decoration:line-through;opacity:.7}
+.stats{display:flex;gap:26px;justify-content:center;font-size:18px;margin:6px 0}
+.stats b{display:block;font-family:'Cabin Sketch','Comic Sans MS',cursive;font-size:40px;color:var(--yel)}
+#kb{position:absolute;opacity:0;pointer-events:none;left:0;top:0;width:1px;height:1px}
+.lvl{position:absolute;left:0;right:0;top:40%;text-align:center;font-family:'Cabin Sketch','Comic Sans MS',cursive;font-size:64px;opacity:0;transition:opacity .4s;pointer-events:none;z-index:4}
+.lvl.on{opacity:1}
+</style>
+</head>
+<body>
+<div class="frame"><div class="board" id="board">
+  <div class="smudge" style="left:10%;top:50%;width:300px;height:120px"></div><div class="smudge" style="right:8%;top:20%;width:220px;height:90px"></div>
+  <div class="hud"><span>Nivel<b id="lvl">1</b></span><span>Puntos<b id="score">0</b></span><span>Combo<b id="combo">×1</b></span><span>PPM<b id="wpm">0</b></span><span class="lives" id="lives">♥♥♥</span></div>
+  <canvas id="dust"></canvas>
+  <div class="floor"></div><div class="typed" id="typed"></div>
+  <div class="tray"><span class="stick" style="left:12%;width:60px;background:#f2f0e6"></span><span class="stick" style="left:18%;width:44px;background:#f4e285"></span><span class="stick" style="left:70%;width:52px;background:#f5a3b8"></span><span class="stick" style="left:76%;width:30px;background:#a7d3f0"></span></div>
+  <div class="lvl" id="lvlBanner"></div>
+  <input id="kb" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Escribe aquí">
+  <div class="panel" id="panel"><div>
+    <h1>Tiza</h1>
+    <p>Las palabras caen por la pizarra. Escríbelas antes de que toquen la línea para borrarlas.</p>
+    <div class="legend"><span style="color:#f4e285">amarilla: limpia todo</span><span style="color:#a7d3f0">azul: congela el tiempo</span><span style="color:#f5a3b8">rosa: ¡vale el triple!</span></div>
+    <div class="stats" id="stats"></div>
+    <div class="ms" id="ms"></div>
+    <button class="go" id="go">empezar clase</button>
+  </div></div>
+</div></div>
+<script>
+const WORDS=[
+ ['sol','mar','luz','pan','gato','casa','flor','nube','río','pez','tren','mesa','libro','rojo','azul','verde','fuego','hoja','lápiz','tiza','reloj','miel','roca','silla'],
+ ['ventana','montaña','guitarra','planeta','cometa','naranja','pizarra','mochila','tortuga','cuaderno','estrella','bosque','camino','pintura','galleta','caracol','sombrero','delfín','relámpago','brújula'],
+ ['mariposa','biblioteca','constelación','laberinto','arquitecto','chocolate','murciélago','horizonte','telescopio','calendario','dinosaurio','helicóptero','fotografía','aventurero','dromedario','rompecabezas'],
+ ['electrodoméstico','paralelepípedo','otorrinolaringólogo','extraordinario','caleidoscopio','esternocleidomastoideo','desoxirribonucleico','ininteligible','anticonstitucional','interdisciplinario']
+];
+const B=document.getElementById('board'),kb=document.getElementById('kb');let words=[],typed='',score=0,lives=3,level=1,combo=0,maxCombo=0,cleared=0,chars=0,t0=0,freeze=0,spawnT=0,state='menu',errors=0,keys=0;
+let best=OS.load('best',0),bestLvl=OS.load('bestLvl',0);
+const MS=[{id:'l5',t:'Llega al nivel 5',chk:()=>level>=5,xp:60},{id:'c15',t:'Combo de 15 palabras seguidas',chk:()=>maxCombo>=15,xp:50},{id:'w40',t:'Supera 40 palabras por minuto',chk:()=>wpm()>=40&&cleared>=10,xp:60},{id:'p',t:'Borra 3 palabras rosas',chk:()=>pinks>=3,xp:30}];let pinks=0,msDone=OS.load('ms',{});
+function norm(s){return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()}
+function pick(){const pool=level<3?WORDS[0].concat(level>1?WORDS[1]:[]):level<5?WORDS[1].concat(WORDS[2]):level<7?WORDS[2].concat(WORDS[1]):WORDS[2].concat(WORDS[3]);return pool[Math.random()*pool.length|0]}
+function spawn(){const w=pick();const r=Math.random();const kind=r<.05?'gold':r<.1?'slow':r<.16?'bomb':'';const el=document.createElement('div');el.className='word '+kind;B.appendChild(el);const bw=B.clientWidth;const x=Math.max(60,Math.min(bw-60,40+Math.random()*(bw-80)));
+ const o={w,n:norm(w),el,x,y:60,v:(18+level*7)*(0.8+Math.random()*.4),kind};el.style.left=x+'px';words.push(o);paint(o)}
+function paint(o){const m=o.n.startsWith(norm(typed))&&typed?typed.length:0;o.el.innerHTML=(o.kind?`<small>${o.kind==='gold'?'¡limpia!':o.kind==='slow'?'congela':'×3'}</small>`:'')+`<span class="done">${o.w.slice(0,m)}</span>${o.w.slice(m)}`;o.el.classList.toggle('target',m>0)}
+function wpm(){const min=(performance.now()-t0)/60000;return min>0?Math.round(chars/5/min):0}
+const dc=document.getElementById('dust'),dx=dc.getContext('2d');let parts=[];function rs(){dc.width=B.clientWidth;dc.height=B.clientHeight}rs();addEventListener('resize',rs);
+function dust(x,y,col,n=40){for(let i=0;i<n;i++)parts.push({x:x+(Math.random()-.5)*60,y,vx:(Math.random()-.5)*120,vy:-Math.random()*120,l:1,c:col,s:1+Math.random()*3})}
+function clearWord(o,chain){const col=o.kind==='gold'?'#f4e285':o.kind==='slow'?'#a7d3f0':o.kind==='bomb'?'#f5a3b8':'#f2f0e6';dust(o.x,o.y+10,col);o.el.style.opacity=0;setTimeout(()=>o.el.remove(),200);words=words.filter(w=>w!==o);
+ if(chain)return;combo++;maxCombo=Math.max(maxCombo,combo);cleared++;chars+=o.w.length+1;const mult=Math.min(5,1+Math.floor(combo/5));score+=o.w.length*10*mult*(o.kind==='bomb'?3:1);if(o.kind==='bomb')pinks++;
+ if(o.kind==='gold'){[...words].forEach(w=>{clearWord(w,true);score+=w.w.length*5})}if(o.kind==='slow')freeze=4;
+ tone(500+combo*20);if(cleared%10===0){level++;banner('Nivel '+level);OS.xp(15,'Nivel '+level+' en Tiza')}checkMs();hud()}
+function hud(){document.getElementById('lvl').textContent=level;document.getElementById('score').textContent=score;document.getElementById('combo').textContent='×'+Math.min(5,1+Math.floor(combo/5));document.getElementById('wpm').textContent=wpm();document.getElementById('lives').textContent='♥'.repeat(lives)+'♡'.repeat(Math.max(0,3-lives));document.getElementById('typed').textContent=typed}
+function checkMs(){for(const m of MS)if(!msDone[m.id]&&m.chk()){msDone[m.id]=1;OS.save('ms',msDone);OS.xp(m.xp,m.t);banner('¡Misión!')}}
+let bt;function banner(t){const b=document.getElementById('lvlBanner');b.textContent=t;b.classList.add('on');clearTimeout(bt);bt=setTimeout(()=>b.classList.remove('on'),1000)}
+let ac;function tone(f,d=.08,type='triangle'){try{ac=ac||new AudioContext();const o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.value=f;g.gain.value=.05;g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d);o.connect(g).connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}}
+function onKey(ch){if(state!=='play')return;keys++;const nt=typed+ch;const cand=words.filter(w=>w.n.startsWith(norm(nt)));if(!cand.length){errors++;combo=0;B.animate([{transform:'translateX(-3px)'},{transform:'translateX(3px)'},{transform:'none'}],{duration:120});tone(120,.1,'square');hud();return}
+ typed=nt;const full=cand.sort((a,b)=>b.y-a.y).find(w=>w.n===norm(typed));if(full){clearWord(full);typed=''}words.forEach(paint);hud()}
+addEventListener('keydown',e=>{if(state!=='play'){if(e.key==='Enter')start();return}if(e.key==='Backspace'){typed=typed.slice(0,-1);words.forEach(paint);hud();e.preventDefault();return}if(e.key==='Escape'){typed='';words.forEach(paint);hud();return}if(e.key.length===1&&/\S/.test(e.key)){e.preventDefault();onKey(e.key)}});
+kb.addEventListener('input',()=>{const v=kb.value;kb.value='';for(const c of v)onKey(c)});B.addEventListener('pointerdown',()=>kb.focus());
+function start(){words.forEach(w=>w.el.remove());words=[];typed='';score=0;lives=3;level=1;combo=0;maxCombo=0;cleared=0;chars=0;pinks=0;errors=0;keys=0;t0=performance.now();spawnT=0;state='play';document.getElementById('panel').hidden=true;kb.focus();hud()}
+function end(){state='menu';const w=wpm();if(score>best){best=score;OS.save('best',best)}bestLvl=Math.max(bestLvl,level);OS.save('bestLvl',bestLvl);OS.xp(Math.min(100,Math.round(score/60)),'Clase de Tiza terminada');if(w>=60)OS.achieve('tiza_60','Dedos de rayo','60 PPM en Tiza');
+ document.querySelector('.panel h1').textContent='¡Recreo!';document.getElementById('go').textContent='otra clase';renderPanel(w)}
+function renderPanel(w){document.getElementById('stats').innerHTML=`<div>puntos<b>${score}</b></div><div>ppm<b>${w||0}</b></div><div>récord<b>${best}</b></div><div>nivel máx.<b>${bestLvl}</b></div>`;document.getElementById('ms').innerHTML='<span style="opacity:.8">Misiones de la clase:</span>'+MS.map(m=>`<div class="${msDone[m.id]?'ok':''}">${m.t} (+${m.xp} XP)</div>`).join('');document.getElementById('panel').hidden=false}
+document.getElementById('go').onclick=start;
+let last=performance.now();function loop(n){const dt=Math.max(0,Math.min(.05,(n-last)/1000));last=n;
+ if(state==='play'){if(freeze>0)freeze-=dt;const sp=freeze>0?.15:1;spawnT-=dt;if(spawnT<=0){spawn();spawnT=Math.max(.9,2.6-level*.2)}
+  const floor=B.clientHeight-62-34;for(const o of [...words]){o.y+=o.v*dt*sp;o.el.style.top=o.y+'px';if(o.y>floor){words=words.filter(w=>w!==o);o.el.style.opacity=0;setTimeout(()=>o.el.remove(),200);lives--;combo=0;dust(o.x,floor+20,'#f5a3b8',60);tone(90,.3,'sawtooth');if(typed&&o.n.startsWith(norm(typed)))typed='';hud();if(lives<=0){end();break}}}
+  if(Math.random()<.02)hud()}
+ dx.clearRect(0,0,dc.width,dc.height);parts=parts.filter(p=>(p.l-=dt*1.2)>0);for(const p of parts){p.vy+=200*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;dx.globalAlpha=p.l;dx.fillStyle=p.c;dx.fillRect(p.x,p.y,p.s,p.s)}dx.globalAlpha=1;
+ requestAnimationFrame(loop)}
+renderPanel(0);requestAnimationFrame(loop);
+</script>
+</body>
+</html>

@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="es" data-app="hucha">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hucha</title>
+<link href="https://fonts.googleapis.com/css2?family=Rubik+Mono+One&family=Work+Sans:wght@400;500;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f5f5f0;--ink:#111;--yel:#ffe14d;--mint:#7cf0b3;--pink:#ff8fb1;--blue:#8fb8ff;--white:#fff}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:'Work Sans',system-ui,sans-serif}
+body{background-image:radial-gradient(#11111118 1px,transparent 1px);background-size:18px 18px}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:16px;padding-block:22px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+h1{font-family:'Rubik Mono One',monospace;font-size:clamp(34px,6vw,60px);margin:0;letter-spacing:-.02em;line-height:1;background:var(--yel);border:3px solid var(--ink);box-shadow:6px 6px 0 var(--ink);padding:6px 16px;transform:rotate(-1.5deg)}
+.tot{border:3px solid var(--ink);background:var(--white);box-shadow:5px 5px 0 var(--ink);padding:8px 14px;font-weight:800}
+.tot b{font-family:'Rubik Mono One',ui-monospace,monospace;font-size:22px;display:block}
+.grid{display:grid;grid-template-columns:300px 1fr 300px;gap:20px;align-items:start}
+.box{border:3px solid var(--ink);background:var(--white);box-shadow:6px 6px 0 var(--ink);padding:16px}
+.box h2{font-family:'Rubik Mono One',ui-monospace,monospace;font-size:15px;margin:0 0 12px;text-transform:uppercase}
+.goal{border:3px solid var(--ink);padding:12px;margin-bottom:10px;cursor:pointer;background:var(--white);display:block;width:100%;text-align:left;font:inherit;color:var(--ink);transition:transform .1s}
+.goal:hover{transform:translate(-2px,-2px);box-shadow:4px 4px 0 var(--ink)}
+.goal.sel{box-shadow:4px 4px 0 var(--ink);transform:translate(-2px,-2px)}
+.goal b{display:block;font-weight:800;font-size:15px}
+.goal small{font-size:12px}
+.goal .p{height:12px;border:2px solid var(--ink);margin-top:8px;background:var(--white)}.goal .p i{display:block;height:100%;background:var(--ink)}
+.goal .ex{font-size:10px;font-weight:800;background:var(--ink);color:var(--white);padding:1px 5px;margin-left:6px;vertical-align:2px}
+.jarBox{text-align:center}
+.jarBox h2{font-size:22px;margin-bottom:4px}
+.amt{font-family:'Rubik Mono One',ui-monospace,monospace;font-size:clamp(30px,5vw,52px);line-height:1.05}
+.amt small{font-size:.4em;display:block;font-family:'Work Sans',system-ui,sans-serif;font-weight:600}
+canvas{width:100%;max-width:360px;height:auto;aspect-ratio:3/4;display:block;margin:10px auto}
+.dep{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.btn{font:inherit;font-weight:800;font-size:16px;border:3px solid var(--ink);background:var(--mint);padding:10px 16px;cursor:pointer;box-shadow:4px 4px 0 var(--ink);color:var(--ink)}
+.btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--ink)}
+.btn.y{background:var(--yel)}.btn.p{background:var(--pink)}.btn.w{background:var(--white)}
+.btn:focus-visible,input:focus-visible{outline:3px dashed var(--blue);outline-offset:3px}
+.custom{display:flex;gap:8px;justify-content:center;margin-top:10px}
+input{font:inherit;font-weight:600;border:3px solid var(--ink);padding:9px 10px;width:110px;background:var(--white);color:var(--ink)}
+.ms{display:flex;gap:6px;margin-top:6px}
+.ms span{flex:1;border:3px solid var(--ink);padding:8px 4px;text-align:center;font-family:'Rubik Mono One',ui-monospace,monospace;font-size:12px;background:var(--white)}
+.ms span.on{background:var(--pink)}
+.fc{font-size:14px;line-height:1.5;margin:0}
+.fc b{background:var(--yel);padding:0 4px}
+.hist{max-height:220px;overflow:auto;font-size:13px;margin-top:10px}
+.hist div{display:flex;justify-content:space-between;border-top:2px dashed #ccc;padding:6px 0}
+.form{display:flex;flex-direction:column;gap:8px}
+.form input{width:100%}
+.ach{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ach span{border:3px solid var(--ink);padding:8px;font-size:11px;font-weight:800;text-align:center;opacity:.3}
+.ach span.on{opacity:1;background:var(--blue)}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:9;width:100%;height:100%;max-width:none;aspect-ratio:auto;margin:0}
+@media (max-width:980px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1>HUCHA</h1><div class="tot">Total ahorrado<b id="total">0 €</b></div></header>
+  <div class="grid">
+    <div>
+      <div class="box"><h2>Mis metas</h2><div id="goals"></div></div>
+      <div class="box" style="margin-top:20px"><h2>Nueva meta</h2><form class="form" id="nf"><input id="gn" placeholder="Nombre (p. ej. Bici nueva)" required maxlength="30"><input id="ga" type="number" min="10" step="10" placeholder="Objetivo en €" required><button class="btn y" type="submit">Crear meta</button></form></div>
+    </div>
+    <div class="box jarBox">
+      <h2 id="gTitle">—</h2>
+      <div class="amt" id="gAmt">0 €<small>de 0 €</small></div>
+      <canvas id="jar" width="360" height="480"></canvas>
+      <div class="dep"><button class="btn" data-a="5">+5 €</button><button class="btn" data-a="20">+20 €</button><button class="btn y" data-a="50">+50 €</button><button class="btn p" data-a="100">+100 €</button></div>
+      <div class="custom"><input id="cv" type="number" min="1" placeholder="Otra cantidad"><button class="btn w" id="cb">Meter</button><button class="btn w" id="wd" title="Retirar dinero">Sacar</button></div>
+      <div class="ms" id="ms"></div>
+    </div>
+    <div>
+      <div class="box"><h2>Pronóstico</h2><p class="fc" id="fc"></p><div class="hist" id="hist"></div></div>
+      <div class="box" style="margin-top:20px"><h2>Insignias</h2><div class="ach" id="ach"></div></div>
+    </div>
+  </div>
+</div>
+<canvas id="confetti"></canvas>
+<script>
+const EX=[{id:1,n:'Viaje a Japón',t:3000,s:1240,ex:1,c:'#ff8fb1',h:[]},{id:2,n:'Portátil nuevo',t:1200,s:860,ex:1,c:'#8fb8ff',h:[]},{id:3,n:'Colchón de emergencia',t:5000,s:900,ex:1,c:'#7cf0b3',h:[]}];
+const now=Date.now();EX.forEach((g,i)=>{let s=0;for(let k=8;k>=1;k--){const a=Math.round(g.s/8);s+=a;g.h.push({a,d:now-k*6*864e5})}g.s=s});
+let goals=OS.load('goals',EX),cur=OS.load('cur',goals[0]&&goals[0].id),badges=OS.load('badges',{});
+const BD=[['first','Primer ingreso'],['m50','Mitad del camino'],['done','Meta cumplida'],['big','Ingreso de 100 €'],['three','3 metas activas'],['k1','1.000 € ahorrados']];
+function G(){return goals.find(g=>g.id===cur)||goals[0]}
+const eur=n=>n.toLocaleString('es-ES',{maximumFractionDigits:0})+' €';
+function save(){OS.save('goals',goals);OS.save('cur',cur)}
+function render(){const g=G();document.getElementById('goals').innerHTML=goals.map(x=>`<button class="goal ${x.id===cur?'sel':''}" data-id="${x.id}" style="background:${x.id===cur?x.c:'#fff'}"><b>${x.n}${x.ex?'<span class="ex">EJEMPLO</span>':''}</b><small>${eur(x.s)} de ${eur(x.t)} · ${Math.round(x.s/x.t*100)}%</small><div class="p"><i style="width:${Math.min(100,x.s/x.t*100)}%"></i></div></button>`).join('');
+ document.querySelectorAll('.goal').forEach(b=>b.onclick=()=>{cur=+b.dataset.id;save();render();resetCoins()});
+ document.getElementById('total').textContent=eur(goals.reduce((a,x)=>a+x.s,0));
+ if(!g)return;document.getElementById('gTitle').textContent=g.n;document.getElementById('gAmt').innerHTML=`${eur(g.s)}<small>de ${eur(g.t)} · faltan ${eur(Math.max(0,g.t-g.s))}</small>`;
+ const p=g.s/g.t;document.getElementById('ms').innerHTML=[25,50,75,100].map(m=>`<span class="${p*100>=m?'on':''}">${m}%</span>`).join('');
+ // forecast
+ const h=g.h||[];let fc='Haz tu primer ingreso y calcularé cuándo llegas.';if(h.length>=2){const span=(Math.max(now,h[h.length-1].d)-h[0].d)/864e5||1;const perDay=h.reduce((a,x)=>a+x.a,0)/Math.max(7,span);const left=Math.max(0,g.t-g.s);if(left<=0)fc='¡Meta cumplida! Hora de disfrutarla… o de crear otra.';else{const days=Math.ceil(left/perDay);const d=new Date(now+days*864e5);fc=`A tu ritmo (<b>${eur(perDay*7)}/semana</b>) llegarás el <b>${d.toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'})}</b>. Con 10 € más por semana: ${Math.max(1,Math.ceil(left/(perDay+10/7)))} días.`}}
+ document.getElementById('fc').innerHTML=fc;document.getElementById('hist').innerHTML=[...h].reverse().slice(0,20).map(x=>`<div><span>${new Date(x.d).toLocaleDateString('es-ES',{day:'numeric',month:'short'})}</span><b>${x.a>0?'+':''}${eur(x.a)}</b></div>`).join('');
+ document.getElementById('ach').innerHTML=BD.map(([k,n])=>`<span class="${badges[k]?'on':''}">${n}</span>`).join('')}
+function badge(k,name){if(badges[k])return;badges[k]=1;OS.save('badges',badges);OS.achieve('hucha_'+k,name,'Insignia de Hucha');OS.xp(20,'Insignia: '+name)}
+function deposit(a){const g=G();if(!g||!a)return;if(g.ex){goals.forEach(x=>{if(x.ex){x.ex=0;x.s=0;x.h=[]}});resetCoins()}const before=g.s/g.t;g.s=Math.max(0,g.s+a);g.h=g.h||[];g.h.push({a,d:Date.now()});const after=g.s/g.t;
+ if(a>0){addCoins(a);OS.xp(Math.min(30,5+Math.round(a/10)),'Ingreso en '+g.n);badge('first','Primer ingreso');if(a>=100)badge('big','Ingreso de 100 €')}
+ for(const m of [.25,.5,.75,1])if(before<m&&after>=m){confetti();ding(m);if(m===.5)badge('m50','Mitad del camino');if(m===1){badge('done','Meta cumplida');OS.xp(60,'Meta cumplida: '+g.n)}}
+ if(goals.reduce((s,x)=>s+x.s,0)>=1000)badge('k1','1.000 € ahorrados');save();render();if(a<0)resetCoins()}
+document.querySelectorAll('.dep .btn').forEach(b=>b.onclick=()=>deposit(+b.dataset.a));
+document.getElementById('cb').onclick=()=>{const v=+document.getElementById('cv').value;if(v>0){deposit(v);document.getElementById('cv').value=''}};
+document.getElementById('wd').onclick=()=>{const v=+document.getElementById('cv').value;if(v>0){deposit(-v);document.getElementById('cv').value=''}else document.getElementById('cv').focus()};
+document.getElementById('nf').onsubmit=e=>{e.preventDefault();const cols=['#ffe14d','#7cf0b3','#ff8fb1','#8fb8ff','#c9a5ff'];if(goals.some(x=>x.ex))goals=goals.filter(x=>!x.ex);const g={id:Date.now(),n:document.getElementById('gn').value,t:+document.getElementById('ga').value,s:0,c:cols[goals.length%cols.length],h:[]};goals.push(g);cur=g.id;e.target.reset();if(goals.length>=3)badge('three','3 metas activas');save();render();resetCoins()};
+// ---- jar physics
+const cv=document.getElementById('jar'),ctx=cv.getContext('2d');const JW=360,JH=480,L=60,R=300,T=90,Bt=450;let coins=[];
+const CC=['#ffe14d','#ffd12a','#f5c518','#ffe98a'];
+function resetCoins(){coins=[];const g=G();if(!g)return;const n=Math.min(170,Math.round(Math.min(1,g.s/g.t)*170));for(let i=0;i<n;i++){const r=11+Math.random()*3;coins.push({x:L+r+Math.random()*(R-L-2*r),y:Bt-r-Math.floor(i/10)*22-Math.random()*10,vx:0,vy:0,r,c:CC[i%4],a:Math.random()*6})}}
+function addCoins(a){const g=G();const target=Math.min(170,Math.round(Math.min(1,g.s/g.t)*170));const n=Math.max(1,Math.min(20,target-coins.length));for(let i=0;i<n;i++){const r=11+Math.random()*3;setTimeout(()=>{coins.push({x:180+(Math.random()-.5)*30,y:10,vx:(Math.random()-.5)*2,vy:2,r,c:CC[i%4],a:0});clink()},i*70)}}
+function step(){for(const c of coins){c.vy+=.35;c.x+=c.vx;c.y+=c.vy;c.vx*=.99;
+  if(c.y>Bt-c.r){c.y=Bt-c.r;c.vy*=-.3;c.vx*=.8}if(c.y>T-20){if(c.x<L+c.r){c.x=L+c.r;c.vx*=-.4}if(c.x>R-c.r){c.x=R-c.r;c.vx*=-.4}}}
+ for(let k=0;k<2;k++)for(let i=0;i<coins.length;i++)for(let j=i+1;j<coins.length;j++){const a=coins[i],b=coins[j];const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy),m=a.r+b.r;if(d<m&&d>0){const o=(m-d)/2,nx=dx/d,ny=dy/d;a.x-=nx*o;a.y-=ny*o;b.x+=nx*o;b.y+=ny*o;const rv=(b.vx-a.vx)*nx+(b.vy-a.vy)*ny;if(rv<0){a.vx+=rv*nx*.5;a.vy+=rv*ny*.5;b.vx-=rv*nx*.5;b.vy-=rv*ny*.5}}}}
+function draw(){step();ctx.clearRect(0,0,JW,JH);const g=G();
+ // jar back
+ ctx.fillStyle='#e8f6ff';ctx.strokeStyle='#111';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(L-6,T);ctx.lineTo(L-6,Bt-10);ctx.quadraticCurveTo(L-6,Bt+6,L+14,Bt+6);ctx.lineTo(R-14,Bt+6);ctx.quadraticCurveTo(R+6,Bt+6,R+6,Bt-10);ctx.lineTo(R+6,T);ctx.closePath();ctx.fill();
+ // goal line
+ ctx.setLineDash([8,6]);ctx.strokeStyle='#111';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(L,T+22);ctx.lineTo(R,T+22);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#111';ctx.font='800 12px Work Sans, sans-serif';ctx.fillText('META',R-40,T+16);
+ for(const c of coins){ctx.save();ctx.translate(c.x,c.y);ctx.fillStyle=c.c;ctx.strokeStyle='#111';ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(0,0,c.r,0,7);ctx.fill();ctx.stroke();ctx.fillStyle='#111';ctx.font=`800 ${c.r}px Work Sans, sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('€',0,1);ctx.restore()}
+ // jar front
+ ctx.strokeStyle='#111';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(L-6,T);ctx.lineTo(L-6,Bt-10);ctx.quadraticCurveTo(L-6,Bt+6,L+14,Bt+6);ctx.lineTo(R-14,Bt+6);ctx.quadraticCurveTo(R+6,Bt+6,R+6,Bt-10);ctx.lineTo(R+6,T);ctx.stroke();
+ ctx.fillStyle='rgba(255,255,255,.55)';ctx.fillRect(L+8,T+30,10,Bt-T-60);
+ // lid
+ ctx.fillStyle=g?g.c:'#ffe14d';ctx.fillRect(L-18,T-34,R-L+36,34);ctx.strokeRect(L-18,T-34,R-L+36,34);ctx.fillStyle='#111';ctx.fillRect(150,T-24,60,8);
+ requestAnimationFrame(draw)}
+let ac;function tone(f,d,t='triangle',v=.05){try{ac=ac||new AudioContext();const o=ac.createOscillator(),g=ac.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d);o.connect(g).connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}}
+function clink(){tone(1800+Math.random()*900,.09,'sine',.03)}function ding(m){[523,659,784,1047].slice(0,1+m*3).forEach((f,i)=>setTimeout(()=>tone(f,.25),i*110))}
+// confetti
+const cf=document.getElementById('confetti'),cx=cf.getContext('2d');let bits=[];function confetti(){cf.width=innerWidth;cf.height=innerHeight;for(let i=0;i<160;i++)bits.push({x:innerWidth/2,y:innerHeight/3,vx:(Math.random()-.5)*16,vy:-Math.random()*14-4,c:['#ffe14d','#7cf0b3','#ff8fb1','#8fb8ff','#111'][i%5],s:6+Math.random()*8,r:Math.random()*6,l:1})}
+(function cl(){cx.clearRect(0,0,cf.width,cf.height);bits=bits.filter(b=>(b.l-=.008)>0);for(const b of bits){b.vy+=.35;b.x+=b.vx;b.y+=b.vy;b.r+=.1;cx.save();cx.translate(b.x,b.y);cx.rotate(b.r);cx.fillStyle=b.c;cx.fillRect(-b.s/2,-b.s/4,b.s,b.s/2);cx.restore()}requestAnimationFrame(cl)})();
+render();resetCoins();draw();
+</script>
+</body>
+</html>

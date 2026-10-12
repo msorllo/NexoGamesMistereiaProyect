@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="es" data-app="bitacora">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bitácora de Ánimo</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef2f7;--card:#ffffff;--ink:#1d2433;--mut:#6b7488;--line:#dde3ec;--m5:#ffb347;--m4:#7fd1ae;--m3:#9ab4e8;--m2:#b39ddb;--m1:#6f7fa3;--acc:#3b5bdb}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:'Manrope',system-ui,sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:24px;display:grid;grid-template-columns:380px 1fr;gap:18px}
+header{grid-column:1/-1;}.wrap>*{min-width:0}header{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px}
+h1{font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(40px,6vw,64px);margin:0;line-height:.95;letter-spacing:-.01em}
+h1 i{color:var(--acc)}
+.date{font-size:14px;color:var(--mut)}.date::first-letter{text-transform:uppercase}
+.badges{display:flex;gap:8px;flex-wrap:wrap}
+.bdg{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:12px;font-weight:600;display:flex;gap:6px;align-items:center}
+.bdg.off{opacity:.4}
+.card{background:var(--card);border-radius:20px;padding:20px;border:1px solid var(--line)}
+.card h2{font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:28px;margin:0 0 4px}
+.card .hint{font-size:13px;color:var(--mut);margin:0 0 14px}
+.moods{display:flex;justify-content:space-between;gap:6px;margin-bottom:6px}
+.mood{background:none;border:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;font:inherit;font-size:12px;color:var(--mut);padding:4px;border-radius:14px;flex:1}
+.mood svg{width:100%;max-width:58px;height:auto;transition:transform .25s}
+.mood:hover svg{transform:scale(1.08)}
+.mood.sel{color:var(--ink);font-weight:700;background:var(--bg)}
+.mood.sel svg{transform:scale(1.15)}
+.mood .blob{animation:morph 6s ease-in-out infinite;transform-origin:50% 50%}
+@keyframes morph{0%,100%{d:path("M30 4C44 4 56 14 56 30S46 56 30 56 4 46 4 30 16 4 30 4Z")}50%{d:path("M30 6C46 3 55 16 54 31S44 57 29 55 5 44 6 29 14 9 30 6Z")}}
+.mood:focus-visible,.tag:focus-visible,button:focus-visible,textarea:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.lbl{font-size:12px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;margin:14px 0 8px;display:flex;justify-content:space-between}
+input[type=range]{width:100%;accent-color:var(--acc)}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 11px;font:inherit;font-size:13px;cursor:pointer;color:var(--ink)}
+.tag.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+textarea{width:100%;min-height:80px;border:1px solid var(--line);border-radius:14px;padding:12px;font:inherit;font-size:14px;resize:vertical;background:var(--bg);color:var(--ink)}
+.save{width:100%;margin-top:14px;border:0;border-radius:14px;padding:14px;font:inherit;font-weight:700;font-size:15px;background:var(--ink);color:#fff;cursor:pointer}
+.save:disabled{opacity:.4;cursor:not-allowed}
+.right{display:flex;flex-direction:column;gap:18px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px 16px}
+.stat small{font-size:12px;color:var(--mut)}
+.stat b{display:block;font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:38px;line-height:1.1}
+.chart svg{width:100%;height:180px;display:block}
+.pix{display:grid;grid-template-columns:28px repeat(31,1fr);gap:3px;font-size:10px;color:var(--mut)}
+.pix span{aspect-ratio:1;border-radius:3px;background:#e4e9f1}
+.pix span.x{background:transparent}
+.pix span.today{outline:2px solid var(--ink);outline-offset:1px}
+.pix i{font-style:normal;align-self:center}
+.legend{display:flex;gap:12px;font-size:12px;color:var(--mut);margin-top:10px;flex-wrap:wrap;align-items:center}
+.legend span{display:inline-flex;gap:5px;align-items:center}.legend em{width:10px;height:10px;border-radius:3px;display:inline-block}
+.ins{display:flex;flex-direction:column;gap:10px}
+.ins div{display:flex;gap:12px;align-items:flex-start;font-size:14px;line-height:1.45}
+.ins b{font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:22px;min-width:64px;color:var(--acc);line-height:1}
+.demo{background:#fff6e6;border:1px solid #ffe0a8;border-radius:12px;padding:8px 12px;font-size:12px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.demo button{border:0;background:none;color:#b8741a;font:inherit;font-weight:700;cursor:pointer;font-size:12px}
+@media (max-width:860px){.wrap{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr 1fr}.pix{gap:2px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><div><div class="date" id="date"></div><h1>Bitácora <i>de ánimo</i></h1></div><div class="badges" id="badges"></div></header>
+  <section class="card">
+    <h2>¿Cómo va hoy?</h2><p class="hint">Treinta segundos al día. Tu yo del futuro lo agradecerá.</p>
+    <div class="moods" id="moods"></div>
+    <div class="lbl"><span>Energía</span><span id="enV">6/10</span></div><input type="range" id="energy" min="1" max="10" value="6">
+    <div class="lbl"><span>¿Qué ha pasado?</span></div><div class="tags" id="tags"></div>
+    <div class="lbl"><span>Una línea para recordar</span></div><textarea id="note" placeholder="Hoy me ha sorprendido…"></textarea>
+    <button class="save" id="save" disabled>Elige cómo te sientes</button>
+  </section>
+  <div class="right">
+    <div class="demo" id="demo"><span>Estás viendo <b>datos de ejemplo</b>. Desaparecen en cuanto registres tu primer día.</span><button id="clearDemo">Quitar ejemplo</button></div>
+    <div class="stats"><div class="stat"><small>Racha actual</small><b id="streak">0</b></div><div class="stat"><small>Días registrados</small><b id="days">0</b></div><div class="stat"><small>Ánimo medio</small><b id="avg">–</b></div></div>
+    <div class="card chart"><h2>Últimos 30 días</h2><svg id="chart" viewBox="0 0 600 180" preserveAspectRatio="none"></svg></div>
+    <div class="card"><h2>Tu año en píxeles</h2><p class="hint">Cada cuadrado es un día, pintado con tu ánimo.</p><div style="overflow-x:auto"><div class="pix" id="pix"></div></div>
+      <div class="legend"><span><em style="background:var(--m5)"></em>Radiante</span><span><em style="background:var(--m4)"></em>Bien</span><span><em style="background:var(--m3)"></em>Normal</span><span><em style="background:var(--m2)"></em>Bajo</span><span><em style="background:var(--m1)"></em>Difícil</span></div></div>
+    <div class="card"><h2>Lo que dicen tus días</h2><div class="ins" id="ins"></div></div>
+  </div>
+</div>
+<script>
+const M=[null,{n:'Difícil',c:'#6f7fa3',f:'M22 40q8-6 16 0'},{n:'Bajo',c:'#b39ddb',f:'M22 39q8-3 16 0'},{n:'Normal',c:'#9ab4e8',f:'M22 38h16'},{n:'Bien',c:'#7fd1ae',f:'M21 36q9 7 18 0'},{n:'Radiante',c:'#ffb347',f:'M20 34q10 11 20 0z'}];
+const TAGS=['Trabajo','Deporte','Familia','Amigos','Buen sueño','Naturaleza','Creatividad','Lectura','Estrés','Música'];
+const dk=d=>d.toISOString().slice(0,10);const today=new Date();today.setHours(12);const TK=dk(today);
+let log=OS.load('log',null),demo=false;
+if(!log){demo=true;log={};for(let i=1;i<=75;i++){const d=new Date(today);d.setDate(d.getDate()-i);if(Math.random()<.12)continue;const tg=TAGS.filter(()=>Math.random()<.22);let m=3+(tg.includes('Deporte')?1:0)+(tg.includes('Naturaleza')?1:0)-(tg.includes('Estrés')?1:0)+(Math.random()<.3?-1:Math.random()<.3?1:0);m=Math.max(1,Math.min(5,m));log[dk(d)]={m,e:Math.max(1,Math.min(10,m*2+(Math.random()*3|0)-1)),t:tg,n:''}}}
+let sel=log[TK]?log[TK].m:0,tags=new Set(log[TK]?log[TK].t:[]);
+document.getElementById('date').textContent=today.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
+function face(i,sz){const m=M[i];return`<svg viewBox="0 0 60 60"><path class="blob" style="animation-delay:-${i*1.1}s" fill="${m.c}" d="M30 4C44 4 56 14 56 30S46 56 30 56 4 46 4 30 16 4 30 4Z"/><circle cx="23" cy="26" r="2.6" fill="#1d2433"/><circle cx="37" cy="26" r="2.6" fill="#1d2433"/><path d="${m.f}" stroke="#1d2433" stroke-width="2.4" fill="${i===5?'#1d2433':'none'}" stroke-linecap="round"/></svg>`}
+function renderMoods(){document.getElementById('moods').innerHTML=[5,4,3,2,1].map(i=>`<button class="mood ${sel===i?'sel':''}" data-m="${i}" aria-label="${M[i].n}">${face(i)}${M[i].n}</button>`).join('');document.querySelectorAll('.mood').forEach(b=>b.onclick=()=>{sel=+b.dataset.m;renderMoods();const s=document.getElementById('save');s.disabled=false;s.textContent=log[TK]&&!demo?'Actualizar hoy':'Guardar el día'})}
+function renderTags(){document.getElementById('tags').innerHTML=TAGS.map(t=>`<button class="tag ${tags.has(t)?'on':''}">${t}</button>`).join('');document.querySelectorAll('.tag').forEach(b=>b.onclick=()=>{tags.has(b.textContent)?tags.delete(b.textContent):tags.add(b.textContent);renderTags()})}
+document.getElementById('energy').oninput=e=>document.getElementById('enV').textContent=e.target.value+'/10';
+document.getElementById('save').onclick=()=>{if(demo){log={};demo=false}const first=!log[TK];log[TK]={m:sel,e:+document.getElementById('energy').value,t:[...tags],n:document.getElementById('note').value};OS.save('log',log);
+ if(first){OS.xp(25,'Día registrado en tu bitácora');const s=streak();if(s>=3)OS.achieve('bit_3','Tres en raya','3 días seguidos registrando tu ánimo');if(s>=7)OS.achieve('bit_7','Semana consciente','7 días seguidos');if(tags.size>=4)OS.achieve('bit_tags','Día completo','Registraste un día con 4 etiquetas o más')}
+ const b=document.getElementById('save');b.textContent='Guardado ✓';b.disabled=true;renderAll()};
+document.getElementById('clearDemo').onclick=()=>{log={};demo=false;renderAll()};
+function streak(){let s=0;const d=new Date(today);if(!log[dk(d)])d.setDate(d.getDate()-1);while(log[dk(d)]){s++;d.setDate(d.getDate()-1)}return s}
+function renderAll(){document.getElementById('demo').hidden=!demo;const keys=Object.keys(log);const st=streak();document.getElementById('streak').textContent=st;document.getElementById('days').textContent=keys.length;document.getElementById('avg').textContent=keys.length?(keys.reduce((a,k)=>a+log[k].m,0)/keys.length).toFixed(1):'–';
+ document.getElementById('badges').innerHTML=[[3,'🌱 3 días'],[7,'🌿 7 días'],[30,'🌳 30 días']].map(([n,l])=>`<span class="bdg ${st>=n?'':'off'}">${l}</span>`).join('');
+ // chart
+ const pts=[];for(let i=29;i>=0;i--){const d=new Date(today);d.setDate(d.getDate()-i);const e=log[dk(d)];pts.push(e?e.m:null)}
+ let s='';const X=i=>10+i*(580/29),Y=m=>160-(m-1)*35;for(let m=1;m<=5;m++)s+=`<line x1="10" x2="590" y1="${Y(m)}" y2="${Y(m)}" stroke="#e4e9f1"/>`;
+ const seg=pts.map((m,i)=>m?[X(i),Y(m),m]:null).filter(Boolean);if(seg.length>1){const d='M'+seg.map(p=>p[0]+' '+p[1]).join(' L');s+=`<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b5bdb" stop-opacity=".25"/><stop offset="1" stop-color="#3b5bdb" stop-opacity="0"/></linearGradient></defs><path d="${d} L${seg[seg.length-1][0]} 170 L${seg[0][0]} 170Z" fill="url(#g)"/><path d="${d}" fill="none" stroke="#3b5bdb" stroke-width="2.5" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>`;seg.forEach((p,i)=>s+=`<circle cx="${p[0]}" cy="${p[1]}" r="${i===seg.length-1?6:3.5}" fill="${M[p[2]].c}" stroke="#fff" stroke-width="1.5" vector-effect="non-scaling-stroke"/>`)}else s+=`<text x="300" y="95" text-anchor="middle" fill="#6b7488" font-size="14">Registra unos días para ver tu curva</text>`;
+ document.getElementById('chart').innerHTML=s;
+ // pixels
+ const y=today.getFullYear();let h='<i></i>'+Array.from({length:31},(_,i)=>`<i style="text-align:center">${(i+1)%5===0||i===0?i+1:''}</i>`).join('');const MN=['E','F','M','A','M','J','J','A','S','O','N','D'];
+ for(let mo=0;mo<12;mo++){h+=`<i>${MN[mo]}</i>`;const dim=new Date(y,mo+1,0).getDate();for(let d=1;d<=31;d++){if(d>dim){h+='<span class="x"></span>';continue}const k=`${y}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;const e=log[k];h+=`<span class="${k===TK?'today':''}" title="${k}${e?' · '+M[e.m].n:''}" style="${e?'background:'+M[e.m].c:''}"></span>`}}
+ document.getElementById('pix').innerHTML=h;
+ // insights
+ const ins=[];if(keys.length>=5){const avgAll=keys.reduce((a,k)=>a+log[k].m,0)/keys.length;const eff=TAGS.map(t=>{const w=keys.filter(k=>log[k].t.includes(t));if(w.length<3)return null;const a=w.reduce((x,k)=>x+log[k].m,0)/w.length;return{t,d:(a-avgAll)/avgAll*100,n:w.length}}).filter(Boolean).sort((a,b)=>b.d-a.d);
+  if(eff[0]&&eff[0].d>0)ins.push([`+${Math.round(eff[0].d)}%`,`Los días con <b style="font-family:inherit;font-size:inherit;color:inherit;min-width:0">${eff[0].t.toLowerCase()}</b> tu ánimo sube por encima de tu media (${eff[0].n} días).`]);
+  const low=eff[eff.length-1];if(low&&low.d<0)ins.push([`${Math.round(low.d)}%`,`Con <b style="font-family:inherit;font-size:inherit;color:inherit;min-width:0">${low.t.toLowerCase()}</b> tu ánimo cae. ¿Qué pequeño cambio lo aliviaría?`]);
+  const wd=[0,0,0,0,0,0,0],wc=[0,0,0,0,0,0,0];keys.forEach(k=>{const d=new Date(k+'T12:00').getDay();wd[d]+=log[k].m;wc[d]++});const DN=['domingos','lunes','martes','miércoles','jueves','viernes','sábados'];let bi=0;wd.forEach((v,i)=>{if(wc[i]&&v/wc[i]>(wc[bi]?wd[bi]/wc[bi]:0))bi=i});ins.push([DN[bi].slice(0,3)+'.',`Tus mejores días suelen ser los ${DN[bi]}.`]);
+  const ee=keys.map(k=>log[k]);const corr=ee.filter(e=>e.e>=7).length?ee.filter(e=>e.e>=7).reduce((a,e)=>a+e.m,0)/ee.filter(e=>e.e>=7).length:0;if(corr)ins.push([corr.toFixed(1),'Es tu ánimo medio en días de energía alta (7+). La energía tira del resto.'])}
+ else ins.push(['5','Registra 5 días y aparecerán tus patrones.']);
+ document.getElementById('ins').innerHTML=ins.map(([a,b])=>`<div><b>${a}</b><span>${b}</span></div>`).join('')}
+renderMoods();renderTags();renderAll();if(sel){document.getElementById('save').disabled=false;document.getElementById('save').textContent='Actualizar hoy'}
+</script>
+</body>
+</html>

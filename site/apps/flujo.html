@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="es" data-app="flujo">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Flujo Estudio</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;700;800&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--wall:#f4f3ef;--ink:#121212;--mut:#8b8a85;--line:#dedcd5;--acc:#e8452c}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--wall);color:var(--ink);font-family:'Figtree',system-ui,sans-serif}
+.app{display:grid;grid-template-columns:1fr 300px;height:100%}
+.stage{position:relative;display:flex;align-items:center;justify-content:center;padding:28px;min-height:0}
+.frame{position:relative;background:#fff;padding:18px 18px 30px;box-shadow:0 1px 0 var(--line),0 30px 50px -30px rgba(0,0,0,.35);max-width:100%;max-height:100%;aspect-ratio:4/5;height:100%}
+#art{width:100%;height:100%;display:block;cursor:crosshair}
+.plaque{position:absolute;left:18px;bottom:-2px;font-size:12px;color:var(--mut);display:flex;gap:14px}
+.plaque b{color:var(--ink);font-weight:600}
+aside{border-left:1px solid var(--line);padding:22px 20px;overflow-y:auto;display:flex;flex-direction:column;gap:18px;background:var(--wall)}
+h1{font-family:'Syne',sans-serif;font-weight:800;font-size:46px;margin:0;letter-spacing:-.04em;line-height:.85}
+h1 span{color:var(--acc)}
+.tag{font-size:12px;color:var(--mut);margin-top:6px}
+.sec h3{font-family:'Syne',system-ui,sans-serif;font-weight:700;font-size:12px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 10px;display:flex;justify-content:space-between}
+.sec h3 span{font-family:'Figtree',system-ui,sans-serif;letter-spacing:0;text-transform:none;color:var(--mut);font-weight:500}
+.pals{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pal{height:34px;display:flex;border:2px solid transparent;cursor:pointer;padding:0;background:none;overflow:hidden}
+.pal i{flex:1}
+.pal.on{border-color:var(--ink)}
+.pal:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.sl{display:grid;grid-template-columns:90px 1fr 34px;align-items:center;gap:8px;font-size:13px;margin-bottom:6px}
+.sl output{font-variant-numeric:tabular-nums;color:var(--mut);text-align:right;font-size:12px}
+input[type=range]{accent-color:var(--ink);width:100%}
+.seg{display:flex;border:1px solid var(--ink)}
+.seg button{flex:1;border:0;background:none;padding:8px 4px;font:inherit;font-size:12px;cursor:pointer;color:var(--ink)}
+.seg button.on{background:var(--ink);color:#fff}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.acts button{border:1px solid var(--ink);background:none;padding:11px;font:inherit;font-weight:600;font-size:13px;cursor:pointer;color:var(--ink)}
+.acts .pri{background:var(--ink);color:#fff;grid-column:1/-1}
+.daily{border:1px solid var(--acc);padding:12px;font-size:13px;line-height:1.45}
+.daily b{font-family:'Syne',system-ui,sans-serif;color:var(--acc);font-size:11px;letter-spacing:.14em;display:block;margin-bottom:4px}
+.daily.done{background:var(--acc);color:#fff}.daily.done b{color:#fff}
+.gal{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.gal img{width:100%;aspect-ratio:4/5;object-fit:cover;display:block;border:1px solid var(--line);background:#fff}
+.gal .empty{grid-column:1/-1;font-size:12px;color:var(--mut);font-style:italic}
+.hint{position:absolute;top:18px;left:50%;transform:translateX(-50%);font-size:12px;color:var(--mut);background:rgba(255,255,255,.9);padding:6px 12px;pointer-events:none;transition:opacity 1s}
+@media (max-width:820px){.app{grid-template-columns:1fr;height:auto}.stage{height:auto;padding:16px}.frame{width:100%;height:auto}#art{height:auto;aspect-ratio:4/5}aside{border-left:0;border-top:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="stage"><div class="frame"><canvas id="art"></canvas><div class="plaque"><span><b id="pname">Sin título nº 1</b></span><span id="pmeta"></span></div></div><div class="hint" id="hint">Haz clic en el lienzo para crear remolinos</div></div>
+  <aside>
+    <div><h1>Flujo<span>.</span></h1><div class="tag">Estudio de arte generativo · campos de ruido</div></div>
+    <div class="daily" id="daily"></div>
+    <div class="sec"><h3>Paleta <span id="palN"></span></h3><div class="pals" id="pals"></div></div>
+    <div class="sec"><h3>Parámetros</h3>
+      <div class="sl"><label for="sc">Escala</label><input type="range" id="sc" min="1" max="30" value="8"><output id="scO">8</output></div>
+      <div class="sl"><label for="ct">Partículas</label><input type="range" id="ct" min="200" max="4000" step="100" value="1600"><output id="ctO">1600</output></div>
+      <div class="sl"><label for="sp">Velocidad</label><input type="range" id="sp" min="1" max="10" value="4"><output id="spO">4</output></div>
+      <div class="sl"><label for="lw">Trazo</label><input type="range" id="lw" min="1" max="8" value="2"><output id="lwO">2</output></div>
+      <div class="sl"><label for="cu">Turbulencia</label><input type="range" id="cu" min="1" max="10" value="3"><output id="cuO">3</output></div>
+    </div>
+    <div class="sec"><h3>Simetría</h3><div class="seg" id="sym"><button data-s="0" class="on">Libre</button><button data-s="1">Espejo</button><button data-s="2">Caleido</button></div></div>
+    <div class="acts"><button id="seed">Nueva semilla</button><button id="pause">Pausar</button><button class="pri" id="save">Colgar en la galería</button></div>
+    <div class="sec"><h3>Tu galería <span id="gN">0</span></h3><div class="gal" id="gal"></div></div>
+  </aside>
+</div>
+<script>
+const PAL=[
+ {n:'Tinta',bg:'#fbfaf7',c:['#121212','#3a3a3a','#e8452c']},
+ {n:'Coral',bg:'#fff4ec',c:['#ff6b4a','#ffb38a','#1f3a5f','#f7d794']},
+ {n:'Abismo',bg:'#0a1128',c:['#1282a2','#fefcfb','#034078','#7fd8e8']},
+ {n:'Musgo',bg:'#f1efe2',c:['#2d4a2b','#8aa66e','#c9a227','#5e3b1f']},
+ {n:'Neón',bg:'#0d0d0d',c:['#ff2e88','#00f0ff','#fff200','#8a2be2']},
+ {n:'Lavanda',bg:'#f6f1fb',c:['#6b4fa0','#c3a6e8','#f2b5d4','#2b1d44']},
+];
+let pal=0,sym=0,seed=Math.random()*1e4|0,paused=false,parts=[],swirls=[],t=0,frames=0;
+let gal=OS.load('gal',[]),usedPal=OS.load('usedPal',{}),num=OS.load('num',1);
+const P={sc:8,ct:1600,sp:4,lw:2,cu:3};
+// value noise
+let perm;function reseed(s){let x=s||1;const r=()=>(x=(x*16807)%2147483647)/2147483647;perm=new Uint8Array(512);const p=[...Array(256).keys()];for(let i=255;i>0;i--){const j=r()*(i+1)|0;[p[i],p[j]]=[p[j],p[i]]}for(let i=0;i<512;i++)perm[i]=p[i&255]}
+const fade=t=>t*t*t*(t*(t*6-15)+10),lerp=(a,b,t)=>a+(b-a)*t;
+function grad(h,x,y){const v=h&3;return(v&1?-x:x)+(v&2?-y:y)}
+function noise(x,y){const X=Math.floor(x)&255,Y=Math.floor(y)&255;x-=Math.floor(x);y-=Math.floor(y);const u=fade(x),v=fade(y);const a=perm[X]+Y,b=perm[X+1]+Y;return lerp(lerp(grad(perm[a],x,y),grad(perm[b],x-1,y),u),lerp(grad(perm[a+1],x,y-1),grad(perm[b+1],x-1,y-1),u),v)}
+const cv=document.getElementById('art'),ctx=cv.getContext('2d');let W,H;
+function size(){const r=cv.getBoundingClientRect();const d=Math.min(devicePixelRatio||1,2);W=cv.width=Math.round(r.width*d);H=cv.height=Math.round(r.height*d)}
+function restart(){reseed(seed);size();ctx.fillStyle=PAL[pal].bg;ctx.fillRect(0,0,W,H);parts=[];const n=P.ct/(sym===2?4:sym===1?2:1);for(let i=0;i<n;i++)parts.push(np());frames=0;
+ document.getElementById('pmeta').textContent=`${PAL[pal].n} · semilla ${seed} · ${['libre','espejo','caleido'][sym]}`;document.getElementById('pname').textContent='Sin título nº '+num}
+function np(){const c=PAL[pal].c;return{x:Math.random()*W,y:Math.random()*H,life:40+Math.random()*200,c:c[Math.random()*c.length|0]}}
+function field(x,y){const s=P.sc*0.0006*(1200/Math.max(W,H));let a=noise(x*s,y*s+t*.0004)*Math.PI*P.cu;for(const w of swirls){const dx=x-w.x,dy=y-w.y,d=Math.hypot(dx,dy);const f=Math.exp(-d/(W*.12));a=a*(1-f)+(Math.atan2(dy,dx)+Math.PI/2*w.dir)*f}return a}
+function draw(){if(!paused){t++;frames++;ctx.lineWidth=P.lw*(W/900);ctx.lineCap='round';const sp=P.sp*(W/900);
+ for(const p of parts){const a=field(p.x,p.y);const nx=p.x+Math.cos(a)*sp,ny=p.y+Math.sin(a)*sp;ctx.strokeStyle=p.c;ctx.globalAlpha=.16;seg(p.x,p.y,nx,ny);p.x=nx;p.y=ny;p.life--;if(p.life<0||p.x<0||p.y<0||p.x>W||p.y>H)Object.assign(p,np())}
+ ctx.globalAlpha=1;if(frames===400)OS.achieve('flujo_first','Primer lienzo','Dejaste que Flujo pintara 400 fotogramas')}requestAnimationFrame(draw)}
+function seg(x1,y1,x2,y2){const L=[[x1,y1,x2,y2]];if(sym>=1)L.push([W-x1,y1,W-x2,y2]);if(sym===2){L.push([x1,H-y1,x2,H-y2]);L.push([W-x1,H-y1,W-x2,H-y2])}ctx.beginPath();for(const l of L){ctx.moveTo(l[0],l[1]);ctx.lineTo(l[2],l[3])}ctx.stroke()}
+cv.addEventListener('pointerdown',e=>{const r=cv.getBoundingClientRect();swirls.push({x:(e.clientX-r.left)/r.width*W,y:(e.clientY-r.top)/r.height*H,dir:e.shiftKey?-1:1});if(swirls.length>6)swirls.shift();document.getElementById('hint').style.opacity=0});
+function renderPals(){document.getElementById('pals').innerHTML=PAL.map((p,i)=>`<button class="pal ${i===pal?'on':''}" data-i="${i}" title="${p.n}" aria-label="Paleta ${p.n}"><i style="background:${p.bg}"></i>${p.c.map(c=>`<i style="background:${c}"></i>`).join('')}</button>`).join('');document.getElementById('palN').textContent=PAL[pal].n;
+ document.querySelectorAll('.pal').forEach(b=>b.onclick=()=>{pal=+b.dataset.i;usedPal[pal]=1;OS.save('usedPal',usedPal);if(Object.keys(usedPal).length===PAL.length)OS.achieve('flujo_pal','Cromática total','Probaste todas las paletas de Flujo');renderPals();restart()})}
+['sc','ct','sp','lw','cu'].forEach(k=>{const el=document.getElementById(k);el.oninput=()=>{P[k]=+el.value;document.getElementById(k+'O').textContent=el.value;if(k==='ct'||k==='sc'||k==='cu')restartSoon()}});
+let rt;function restartSoon(){clearTimeout(rt);rt=setTimeout(restart,250)}
+document.querySelectorAll('#sym button').forEach(b=>b.onclick=()=>{sym=+b.dataset.s;document.querySelectorAll('#sym button').forEach(x=>x.classList.toggle('on',x===b));restart()});
+document.getElementById('seed').onclick=()=>{seed=Math.random()*1e4|0;swirls=[];restart()};
+document.getElementById('pause').onclick=e=>{paused=!paused;e.currentTarget.textContent=paused?'Continuar':'Pausar'};
+// daily challenge
+const dayN=Math.floor(Date.now()/864e5);const DP=dayN%PAL.length,DS=dayN%3;let dailyDone=OS.load('daily',-1)===dayN;
+function renderDaily(){const d=document.getElementById('daily');d.className='daily'+(dailyDone?' done':'');d.innerHTML=`<b>OBRA DEL DÍA</b>${dailyDone?'¡Completada! Vuelve mañana por un nuevo encargo.':`Cuelga una obra con la paleta <u>${PAL[DP].n}</u> y simetría <u>${['libre','espejo','caleido'][DS]}</u>. Recompensa: +50 XP.`}`}
+document.getElementById('save').onclick=()=>{const th=document.createElement('canvas');th.width=240;th.height=300;th.getContext('2d').drawImage(cv,0,0,240,300);const url=th.toDataURL('image/jpeg',.72);gal.unshift({u:url,n:'Sin título nº '+num,p:pal});gal=gal.slice(0,12);num++;OS.save('num',num);try{OS.save('gal',gal)}catch(e){}
+ OS.xp(15,'Obra colgada en la galería');if(gal.length>=5)OS.achieve('flujo_5','Exposición individual','5 obras en tu galería');if(!dailyDone&&pal===DP&&sym===DS){dailyDone=true;OS.save('daily',dayN);OS.xp(50,'Obra del día');renderDaily()}renderGal();document.getElementById('pname').textContent='Sin título nº '+num};
+function renderGal(){document.getElementById('gN').textContent=gal.length+'/12';document.getElementById('gal').innerHTML=gal.length?gal.map(g=>`<img src="${g.u}" alt="${g.n}" title="${g.n}">`).join(''):'<div class="empty">Aún no has colgado nada. Deja que el lienzo respire unos segundos y cuélgalo.</div>'}
+addEventListener('resize',restartSoon);
+renderPals();renderDaily();renderGal();restart();
+// pre-warm so the canvas opens with an artwork
+for(let i=0;i<120;i++){t++;for(const p of parts){const a=field(p.x,p.y);const nx=p.x+Math.cos(a)*P.sp*(W/900),ny=p.y+Math.sin(a)*P.sp*(W/900);ctx.strokeStyle=p.c;ctx.globalAlpha=.16;ctx.lineWidth=P.lw*(W/900);seg(p.x,p.y,nx,ny);p.x=nx;p.y=ny;p.life--;if(p.life<0||p.x<0||p.y<0||p.x>W||p.y>H)Object.assign(p,np())}}ctx.globalAlpha=1;
+draw();
+</script>
+</body>
+</html>

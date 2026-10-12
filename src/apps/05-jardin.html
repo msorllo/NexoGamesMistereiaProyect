@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="es" data-app="jardin">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Jardín Focus</title>
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Karla:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--sage:#dfe7d5;--leaf:#2f4a3a;--moss:#6d8a62;--blush:#f2a7b5;--clay:#c9774f;--paper:#f6f8f1;--mut:#7d8f7c}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--sage);color:var(--leaf);font-family:'Karla',system-ui,sans-serif}
+.wrap{max-width:1100px;margin:0 auto;padding-inline:16px;padding-block:20px;display:grid;grid-template-columns:1.1fr .9fr;gap:20px}
+header{grid-column:1/-1;display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+h1{font-family:'Young Serif',serif;font-weight:400;font-size:clamp(32px,5vw,52px);margin:0;line-height:1;letter-spacing:-.01em}
+h1 em{font-style:normal;color:var(--clay)}
+.wallet{display:flex;gap:10px}
+.chip{background:var(--paper);border-radius:999px;padding:8px 14px;font-weight:700;font-size:14px;display:flex;align-items:center;gap:6px}
+.chip svg{width:16px;height:16px}
+.stage{background:radial-gradient(ellipse at 50% 100%,#cfdcc2 0%,#e9efe2 60%);border-radius:28px;position:relative;min-height:440px;overflow:hidden}
+#plant{width:100%;height:100%;position:absolute;inset:0}
+.stage .spec{position:absolute;left:20px;top:18px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
+.stage .spec b{display:block;font-family:'Young Serif',Georgia,serif;font-size:22px;letter-spacing:0;text-transform:none;color:var(--leaf);font-weight:400}
+.side{display:flex;flex-direction:column;gap:16px}
+.timer{background:var(--paper);border-radius:28px;padding:22px;display:flex;flex-direction:column;align-items:center;gap:14px}
+.ring{position:relative;width:220px;height:220px;max-width:100%}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .t{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring .t b{font-family:'Young Serif',Georgia,serif;font-weight:400;font-size:54px;font-variant-numeric:tabular-nums;line-height:1}
+.ring .t span{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);margin-top:6px}
+.modes{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.modes button{border:1.5px solid #cbd6c0;background:none;border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;color:var(--leaf);cursor:pointer}
+.modes button.on{background:var(--leaf);color:var(--paper);border-color:var(--leaf)}
+input#task{width:100%;border:0;border-bottom:1.5px solid #cbd6c0;background:none;font:inherit;font-size:16px;padding:8px 2px;color:var(--leaf);text-align:center}
+input#task:focus{outline:none;border-color:var(--clay)}
+.act{display:flex;gap:8px}
+.act button{border:0;border-radius:16px;padding:12px 22px;font:inherit;font-weight:700;font-size:15px;cursor:pointer}
+#start{background:var(--leaf);color:var(--paper)}
+#stop{background:#eadfd6;color:var(--clay)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--clay);outline-offset:2px}
+.demo{font-size:12px;color:var(--mut);display:flex;align-items:center;gap:6px}
+.card{background:var(--paper);border-radius:28px;padding:18px 20px}
+.card h3{margin:0 0 10px;font-family:'Young Serif',Georgia,serif;font-weight:400;font-size:20px;display:flex;justify-content:space-between;align-items:baseline}
+.card h3 small{font-family:'Karla',system-ui,sans-serif;font-size:12px;color:var(--mut)}
+.seeds{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px}
+.seed{border:1.5px solid #dfe6d6;border-radius:16px;padding:8px;text-align:center;cursor:pointer;background:none;font:inherit;color:var(--leaf)}
+.seed canvas{width:56px;height:56px;display:block;margin:0 auto}
+.seed b{display:block;font-size:12px}
+.seed small{font-size:11px;color:var(--mut)}
+.seed.on{border-color:var(--clay);background:#fbf2ec}
+.seed.lock{opacity:.6}
+.green{grid-column:1/-1}
+.shelf{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px}
+.pot{flex:none;width:92px;text-align:center;font-size:11px;color:var(--mut)}
+.pot canvas{width:92px;height:110px;background:#eef2e8;border-radius:14px}
+.empty{color:var(--mut);font-size:14px;font-style:italic}
+@media (max-width:820px){.wrap{grid-template-columns:1fr}.stage{min-height:360px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Jardín <em>Focus</em></h1>
+    <div class="wallet"><span class="chip"><svg viewBox="0 0 16 16"><ellipse cx="8" cy="9" rx="4" ry="5.5" fill="#c9774f"/><path d="M8 3.5c1-2 3-2.5 4-2" stroke="#6d8a62" stroke-width="1.6" fill="none"/></svg><span id="seedsN">0</span> semillas</span><span class="chip">🔥 <span id="streak">0</span> hoy</span></div>
+  </header>
+  <div class="stage"><canvas id="plant"></canvas><div class="spec">Creciendo<b id="specName">Helecho</b></div></div>
+  <div class="side">
+    <div class="timer">
+      <div class="ring"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" fill="none" stroke="#e5ebdd" stroke-width="6"/><circle id="arc" cx="50" cy="50" r="44" fill="none" stroke="#2f4a3a" stroke-width="6" stroke-linecap="round" stroke-dasharray="276.46" stroke-dashoffset="276.46"/></svg><div class="t"><b id="clock">25:00</b><span id="phase">Enfoque</span></div></div>
+      <div class="modes" id="modes"><button data-m="25" class="on">25 min</button><button data-m="50">50 min</button><button data-m="15">15 min</button></div>
+      <input id="task" placeholder="¿En qué vas a enfocarte?" value="Revisar propuesta para cliente" maxlength="60">
+      <div class="act"><button id="start">Plantar y empezar</button><button id="stop" hidden>Rendirse</button></div>
+      <label class="demo"><input type="checkbox" id="demo"> Modo demostración (1 min = 1 s)</label>
+    </div>
+    <div class="card"><h3>Semillero <small>elige qué plantar</small></h3><div class="seeds" id="seedGrid"></div></div>
+  </div>
+  <div class="card green"><h3>Tu invernadero <small id="total">0 sesiones completadas</small></h3><div class="shelf" id="shelf"></div></div>
+</div>
+<script>
+const SP=[
+ {id:'fern',n:'Helecho',cost:0,trunk:'#4d6b3c',leaf:['#6d8a62','#86a86f'],flower:null,ang:.42,depth:6,len:.19,spread:.72},
+ {id:'cherry',n:'Cerezo',cost:3,trunk:'#5a3a2e',leaf:['#f2a7b5','#f7c6cf'],flower:'#fff0f3',ang:.5,depth:7,len:.2,spread:.7},
+ {id:'sun',n:'Girasol',cost:5,trunk:'#5d8a3a',leaf:['#6fa34a','#88b85e'],flower:'#f5b921',ang:.2,depth:4,len:.26,spread:.8,sunflower:1},
+ {id:'bonsai',n:'Bonsái',cost:8,trunk:'#4a3326',leaf:['#3f6b4a','#5a8a5f'],flower:null,ang:.8,depth:6,len:.16,spread:.62,twist:.5},
+ {id:'lav',n:'Lavanda',cost:12,trunk:'#6a7d5a',leaf:['#9b8ac4','#b7a8dc'],flower:'#7d68b8',ang:.18,depth:5,len:.2,spread:.78},
+ {id:'maple',n:'Arce rojo',cost:18,trunk:'#4a2f25',leaf:['#d0543a','#e8804f'],flower:null,ang:.55,depth:7,len:.2,spread:.7},
+];
+let owned=OS.load('owned',['fern']),seeds=OS.load('seeds',2),shelf=OS.load('shelf',[]),cur=OS.load('cur','fern');
+const today=new Date().toDateString();let day=OS.load('day',{d:today,n:0});if(day.d!==today)day={d:today,n:0};
+let mins=25,run=false,remain=25*60,total=25*60,seedv=Math.random()*1e6|0,wilted=false,lastT=0;
+function rnd(s){let x=s;return()=>{x=(x*16807)%2147483647;return x/2147483647}}
+function drawPlant(c,g,sp,seed,wilt,potOnly){const ctx=c.getContext('2d');const W=c.width,H=c.height;ctx.clearRect(0,0,W,H);const R=rnd(seed+7);
+ // pot
+ const pw=Math.min(W*.34,H*.2),ph=pw*.62,px=W/2,py=H*.93;ctx.fillStyle='#c9774f';ctx.beginPath();ctx.moveTo(px-pw/2,py-ph);ctx.lineTo(px+pw/2,py-ph);ctx.lineTo(px+pw*.38,py);ctx.lineTo(px-pw*.38,py);ctx.fill();ctx.fillStyle='#b5673f';ctx.fillRect(px-pw*.56,py-ph-pw*.14,pw*1.12,pw*.16);ctx.fillStyle='#4a3326';ctx.beginPath();ctx.ellipse(px,py-ph-pw*.14,pw*.5,pw*.05,0,0,7);ctx.fill();
+ if(potOnly){ctx.globalAlpha=.22;g=1;wilt=false}
+ let L=H*sp.len*(0.35+g*.65);const col=(h)=>wilt?'#9a9a86':h;
+ function br(x,y,a,len,d){const grow=Math.max(0,Math.min(1,g*sp.depth*1.15-d));if(grow<=0)return;const l=len*grow;const x2=x+Math.cos(a)*l,y2=y+Math.sin(a)*l;
+  ctx.strokeStyle=col(sp.trunk);ctx.lineWidth=Math.max(1,Math.pow(sp.depth-d,1.15)*H*.0026);ctx.lineCap='round';ctx.beginPath();ctx.moveTo(x,y);ctx.quadraticCurveTo(x+Math.cos(a+.3)*l*.5,y+Math.sin(a+.3)*l*.5,x2,y2);ctx.stroke();
+  if(d>=sp.depth-2&&g>.25){const n=sp.sunflower?0:3;for(let i=0;i<n;i++){ctx.fillStyle=col(sp.leaf[i%2]);const la=a+(R()-.5)*2.2,ls=H*.022*(1+R())*Math.min(1,(g-.25)*2);ctx.save();ctx.translate(x2+(R()-.5)*6,y2+(R()-.5)*6);ctx.rotate(la);ctx.beginPath();ctx.ellipse(ls*.6,0,ls,ls*.45,0,0,7);ctx.fill();ctx.restore()}}
+  if(sp.flower&&d>=sp.depth-1&&g>.8&&!wilt&&R()>.35){const fs=H*.018*(g-.8)*5;ctx.fillStyle=sp.flower;for(let k=0;k<5;k++){ctx.beginPath();ctx.arc(x2+Math.cos(k*1.26)*fs,y2+Math.sin(k*1.26)*fs,fs*.8,0,7);ctx.fill()}ctx.fillStyle='#f5d27a';ctx.beginPath();ctx.arc(x2,y2,fs*.6,0,7);ctx.fill()}
+  if(d<sp.depth){const k=(sp.twist||0)*(R()-.5);br(x2,y2,a-sp.ang+k+(R()-.5)*.2,len*sp.spread,d+1);br(x2,y2,a+sp.ang+k+(R()-.5)*.2,len*sp.spread,d+1);if(R()>.6&&d<3)br(x2,y2,a+(R()-.5)*.3,len*sp.spread*.9,d+1)}}
+ const baseY=py-ph-pw*.14;const tilt=wilt?.5:0;
+ if(sp.sunflower){const h=H*.7*g;ctx.strokeStyle=col(sp.trunk);ctx.lineWidth=H*.009;ctx.beginPath();ctx.moveTo(px,baseY);ctx.quadraticCurveTo(px+(wilt?40:10),baseY-h*.5,px+(wilt?h*.3:0),baseY-h*(wilt?.7:1));ctx.stroke();for(let i=1;i<4;i++){if(g*4<i)break;ctx.fillStyle=col(sp.leaf[i%2]);ctx.save();ctx.translate(px,baseY-h*i/4.5);ctx.rotate(i%2?-.6:3.7);ctx.beginPath();ctx.ellipse(H*.04,0,H*.045,H*.018,0,0,7);ctx.fill();ctx.restore()}
+  if(g>.6){const fx=px+(wilt?h*.3:0),fy=baseY-h*(wilt?.7:1),fs=H*.07*Math.min(1,(g-.6)*2.5);ctx.fillStyle=col(sp.flower);for(let k=0;k<16;k++){ctx.save();ctx.translate(fx,fy);ctx.rotate(k/16*6.283);ctx.beginPath();ctx.ellipse(fs*.9,0,fs*.55,fs*.2,0,0,7);ctx.fill();ctx.restore()}ctx.fillStyle=wilt?'#6a6a5a':'#5a3a1e';ctx.beginPath();ctx.arc(fx,fy,fs*.55,0,7);ctx.fill()}ctx.globalAlpha=1;return}
+ br(px,baseY,-Math.PI/2+tilt*.3,L,0);ctx.globalAlpha=1}
+const pc=document.getElementById('plant');function rs(){const r=pc.getBoundingClientRect();const d=Math.min(devicePixelRatio||1,2);pc.width=r.width*d;pc.height=r.height*d;paint()}addEventListener('resize',rs);
+function sp(){return SP.find(s=>s.id===cur)}
+function paint(){const g=run?1-remain/total:(wilted?.55:0.0);drawPlant(pc,Math.max(g,run?0.02:0),sp(),seedv,wilted,!run&&!wilted)}
+function fmt(s){s=Math.ceil(s);return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
+function ui(){document.getElementById('clock').textContent=fmt(remain);document.getElementById('arc').style.strokeDashoffset=276.46*(remain/total);document.getElementById('seedsN').textContent=seeds;document.getElementById('streak').textContent=day.n;document.getElementById('specName').textContent=sp().n;document.getElementById('start').hidden=run;document.getElementById('stop').hidden=!run;document.getElementById('phase').textContent=run?'Creciendo…':wilted?'Se marchitó':'Listo para plantar';document.getElementById('task').disabled=run}
+document.querySelectorAll('#modes button').forEach(b=>b.onclick=()=>{if(run)return;mins=+b.dataset.m;remain=total=mins*60;document.querySelectorAll('#modes button').forEach(x=>x.classList.toggle('on',x===b));ui()});
+document.getElementById('start').onclick=()=>{run=true;wilted=false;seedv=Math.random()*1e6|0;remain=total=mins*60;lastT=performance.now();ui();OS.achieve('jardin_first','Primera semilla','Plantaste tu primera sesión')};
+document.getElementById('stop').onclick=()=>{run=false;wilted=true;remain=total;ui();paint()};
+function tick(n){const dt=(n-lastT)/1000;lastT=n;if(run){remain-=dt*(document.getElementById('demo').checked?60:1);if(remain<=0)done();ui();paint()}requestAnimationFrame(tick)}
+function done(){run=false;remain=0;const reward=Math.round(mins/12.5);seeds+=reward;day.n++;OS.save('day',day);OS.save('seeds',seeds);
+ shelf.unshift({sp:cur,seed:seedv,task:document.getElementById('task').value||'Sesión',m:mins,d:new Date().toLocaleDateString('es-ES',{day:'numeric',month:'short'})});shelf=shelf.slice(0,40);OS.save('shelf',shelf);
+ OS.xp(mins*2,'Sesión de '+mins+' min completada');if(day.n>=4)OS.achieve('jardin_4','Jardinero constante','4 sesiones en un día');if(shelf.length>=10)OS.achieve('jardin_10','Invernadero lleno','10 plantas cultivadas');
+ drawPlant(pc,1,sp(),seedv,false);document.getElementById('phase').textContent='¡Floreció! +'+reward+' semillas';remain=total;renderShelf();renderSeeds();setTimeout(ui,2500)}
+function renderSeeds(){const g=document.getElementById('seedGrid');g.innerHTML='';SP.forEach(s=>{const own=owned.includes(s.id);const b=document.createElement('button');b.className='seed'+(s.id===cur?' on':'')+(own?'':' lock');const c=document.createElement('canvas');c.width=c.height=112;drawPlant(c,own?1:.5,s,42,!own);b.appendChild(c);b.insertAdjacentHTML('beforeend',`<b>${s.n}</b><small>${own?'Tuya':s.cost+' semillas'}</small>`);
+ b.onclick=()=>{if(run)return;if(!own){if(seeds>=s.cost){seeds-=s.cost;owned.push(s.id);OS.save('owned',owned);OS.save('seeds',seeds);OS.xp(15,'Nueva especie: '+s.n);if(owned.length===SP.length)OS.achieve('jardin_all','Botánica completa','Todas las especies desbloqueadas')}else{b.animate([{transform:'translateX(-4px)'},{transform:'translateX(4px)'},{transform:'none'}],{duration:250});return}}cur=s.id;OS.save('cur',cur);wilted=false;renderSeeds();ui();paint()};g.appendChild(b)})}
+function renderShelf(){const s=document.getElementById('shelf');document.getElementById('total').textContent=shelf.length+' sesiones completadas';if(!shelf.length){s.innerHTML='<div class="empty">Completa tu primera sesión y la planta vivirá aquí para siempre.</div>';return}s.innerHTML='';shelf.forEach(p=>{const d=document.createElement('div');d.className='pot';const c=document.createElement('canvas');c.width=184;c.height=220;drawPlant(c,1,SP.find(x=>x.id===p.sp),p.seed,false);d.appendChild(c);d.insertAdjacentHTML('beforeend',`<div>${p.task.slice(0,22)}</div><div>${p.m} min · ${p.d}</div>`);s.appendChild(d)})}
+renderSeeds();renderShelf();ui();rs();lastT=performance.now();requestAnimationFrame(tick);
+</script>
+</body>
+</html>

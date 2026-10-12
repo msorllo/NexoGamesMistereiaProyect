@@ -1,0 +1,73 @@
+{
+ "manifest": {
+  "id": "quilate",
+  "file": "30-quilate.html",
+  "name": "Quilate",
+  "cat": "3d creatividad",
+  "tag": "Diseña joyas de lujo y cumple cada encargo",
+  "bg": "#e6e8ec",
+  "bg2": "#ffffff",
+  "fg": "#121316",
+  "acc": "#0f5c4a",
+  "font": "'Bodoni Moda',Didot,serif",
+  "glb": "quilate"
+ },
+ "appinfo": {
+  "concept": "Atelier de joyería en 3D con look de foto de producto: configuras anillos, colgantes y pendientes (metal, gema, talla, quilates, engaste, aro pavé y grabado) con precio en tiempo real, y en modo Encargos atiendes clientas con historia, presupuesto y pistas que puntúan de 0 a 100 y suben la reputación del atelier.",
+  "tech": "Three.js r147 + kit FX (bloom, partículas, tweens, audio sintetizado). Modelos en Blender (b_quilate.py, bmesh): gemas con facetas reales (brillante, oval, pera, corazón, princesa, esmeralda escalonada), cabezas de garras ajustadas a cada talla con BVH para que abracen la piedra sin atravesarla, halos con posiciones de melee exportadas como extras glTF (userData.q), chatones, aro comfort-fit y pavé, asa, gancho, eslabón, pedestal, busto, soporte, ciclorama y vitrina. En la app: diamante como espejo facetado sobre un entorno de estudio propio (PMREM con tiras de luz), gemas de color con transmisión física, destellos de 4 puntas, alejandrita que cambia de color al girar, cadena en catenaria con InstancedMesh y grabado como textura dentro del aro.",
+  "mechanics": [
+   "Atelier libre: 3 piezas, 4 metales, 8 gemas, 6 tallas, 0,5–3 ct, 4 engastes, aro pavé y grabado",
+   "Precio en tiempo real",
+   "Encargos con historia, requisitos y pistas; satisfacción 0–100 con desglose y reseña",
+   "Reputación → 5 niveles (Taller de barrio → Maison) que desbloquean gemas, tallas y engastes",
+   "Clienta VIP del día (reputación ×2)",
+   "Mi vitrina: hasta 12 diseños guardados"
+  ],
+  "controls": "Pestañas del panel; arrastrar para orbitar y rueda/pellizco para zoom; Entregar en modo Encargos.",
+  "ideas": [
+   "Probador AR sobre la mano (WebXR o MediaPipe Hands)",
+   "Exportar ficha del diseño a PDF con render y presupuesto (demo para joyerías reales)",
+   "Comparador de dos diseños lado a lado",
+   "Certificado simulado (color, pureza) que cambie precio y aspecto",
+   "Clientes recurrentes con aniversarios",
+   "Temporadas: San Valentín, bodas, Navidad",
+   "Más piezas: pulsera tenis, gemelos, tiara",
+   "Reto contrarreloj: tres encargos en 90 s",
+   "Vista macro animada del grabado"
+  ]
+ },
+ "actions": [
+  [
+   "wait",
+   2500
+  ],
+  [
+   "js",
+   "Q.ff(2)"
+  ],
+  [
+   "js",
+   "Q.rep(900);Q.set('gem','Alejandrita');Q.set('set','Halo');Q.set('metal','rosa')"
+  ],
+  [
+   "js",
+   "Q.set('piece','Colgante');Q.set('cut','Pera')"
+  ],
+  [
+   "js",
+   "Q.set('piece','Pendientes');Q.set('cut','Esmeralda')"
+  ],
+  [
+   "js",
+   "Q.mode('E');Q.deliver()"
+  ],
+  [
+   "js",
+   "Q.save();Q.state()"
+  ],
+  [
+   "wait",
+   800
+  ]
+ ]
+}

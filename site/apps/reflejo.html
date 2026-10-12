@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="es" data-app="reflejo">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reflejo</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--w:#ffffff;--ink:#0a0a0a;--red:#ff3b30;--g:#e9e9e9;--g2:#9a9a9a;--grn:#00b86b}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--w);color:var(--ink);font-family:'Barlow',system-ui,sans-serif;overflow:hidden}
+.app{display:grid;grid-template-rows:auto 1fr auto;height:100%}
+header{display:grid;grid-template-columns:auto 1fr auto auto auto;align-items:end;gap:0;border-bottom:3px solid var(--ink)}
+header>div{padding:10px 18px;border-right:1px solid var(--g)}
+header>div:last-child{border-right:0}
+.logo{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:clamp(40px,6vw,72px);line-height:.8;letter-spacing:-.02em;text-transform:uppercase}
+.logo i{font-style:normal;color:var(--red)}
+.k{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--g2)}
+.v{font-family:'Barlow Condensed',Impact,'Arial Narrow',system-ui,sans-serif;font-weight:700;font-size:40px;line-height:1;font-variant-numeric:tabular-nums}
+.arena{position:relative;overflow:hidden;cursor:crosshair;background:var(--w);touch-action:none}
+.arena.wait{background:var(--ink)}.arena.go{background:var(--red)}
+.arena .grid{position:absolute;inset:0;background-image:linear-gradient(var(--g) 1px,transparent 1px),linear-gradient(90deg,var(--g) 1px,transparent 1px);background-size:80px 80px;opacity:.6;pointer-events:none}
+.arena.wait .grid,.arena.go .grid{opacity:0}
+.tgt{position:absolute;border-radius:50%;background:var(--red);transform:translate(-50%,-50%) scale(0);animation:pop .14s ease-out forwards;box-shadow:inset 0 0 0 6px var(--w),inset 0 0 0 10px var(--red),inset 0 0 0 14px var(--w)}
+@keyframes pop{to{transform:translate(-50%,-50%) scale(1)}}
+.hitfx{position:absolute;pointer-events:none;font-family:'Barlow Condensed',Impact,'Arial Narrow',system-ui,sans-serif;font-weight:700;font-size:18px;transform:translate(-50%,-50%);animation:up .6s ease-out forwards}
+@keyframes up{to{transform:translate(-50%,-160%);opacity:0}}
+.miss{position:absolute;width:10px;height:10px;border:2px solid var(--g2);border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;animation:up .5s forwards}
+.center{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:16px;pointer-events:none}
+.center h2{font-family:'Barlow Condensed',Impact,'Arial Narrow',system-ui,sans-serif;font-weight:800;font-size:clamp(48px,9vw,120px);line-height:.85;margin:0;text-transform:uppercase}
+.center p{font-size:17px;color:var(--g2);max-width:44ch}
+.arena.wait .center,.arena.go .center{color:var(--w)}.arena.wait .center p,.arena.go .center p{color:rgba(255,255,255,.7)}
+.menu{position:absolute;inset:0;display:grid;grid-template-columns:repeat(3,1fr);background:var(--w)}
+.menu[hidden]{display:none}
+.mode{border:0;border-right:1px solid var(--g);background:var(--w);text-align:left;padding:28px 24px;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;font:inherit;color:var(--ink);transition:background .15s}
+.mode:hover{background:#fafafa}.mode:hover .num{color:var(--red)}
+.mode:focus-visible{outline:3px solid var(--red);outline-offset:-3px}
+.mode .num{font-family:'Barlow Condensed',Impact,'Arial Narrow',system-ui,sans-serif;font-weight:800;font-size:clamp(80px,14vw,180px);line-height:.8;color:var(--g);transition:color .2s}
+.mode h3{font-family:'Barlow Condensed',Impact,'Arial Narrow',system-ui,sans-serif;font-weight:700;font-size:38px;margin:10px 0 4px;text-transform:uppercase}
+.mode p{margin:0;color:var(--g2);font-size:15px;line-height:1.45;max-width:32ch}
+.mode .best{margin-top:14px;font-size:13px;border-top:1px solid var(--g);padding-top:10px}
+.mode .best b{font-family:'Barlow Condensed',Impact,'Arial Narrow',system-ui,sans-serif;font-size:24px;display:block}
+footer{border-top:3px solid var(--ink);display:flex;align-items:center;gap:0;overflow-x:auto}
+.rk{flex:1;padding:10px 14px;border-right:1px solid var(--g);min-width:110px}
+.rk b{display:block;font-family:'Barlow Condensed',Impact,'Arial Narrow',system-ui,sans-serif;font-size:22px;font-weight:700;text-transform:uppercase}
+.rk small{font-size:11px;color:var(--g2)}
+.rk.on{background:var(--ink);color:var(--w)}.rk.on small{color:#bbb}
+.rk.me{background:var(--red);color:var(--w)}.rk.me small{color:#ffe0dd}
+.bars{display:flex;gap:6px;align-items:flex-end;height:90px;margin-top:14px;justify-content:center}
+.bars span{width:34px;background:var(--ink);position:relative}
+.bars span i{position:absolute;top:-18px;left:0;right:0;text-align:center;font-style:normal;font-size:11px}
+@media (max-width:760px){header{grid-template-columns:1fr 1fr 1fr}header .logo{grid-column:1/-1}.menu{grid-template-columns:1fr;overflow:auto}.mode{border-right:0;border-bottom:1px solid var(--g);padding:16px}.mode .num{font-size:64px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header><div class="logo">Refle<i>jo</i></div><div></div><div><div class="k">Modo</div><div class="v" id="hm">—</div></div><div><div class="k">Marcador</div><div class="v" id="hs">0</div></div><div><div class="k">Tiempo</div><div class="v" id="ht">0.0</div></div></header>
+  <div class="arena" id="arena"><div class="grid"></div><div class="center" id="center"></div>
+    <div class="menu" id="menu">
+      <button class="mode" data-m="aim"><span class="num">01</span><div><h3>Precisión</h3><p>30 dianas que encogen. Rápido y sin fallar: cada error resta.</p><div class="best">Mejor puntuación<b id="b-aim">—</b></div></div></button>
+      <button class="mode" data-m="react"><span class="num">02</span><div><h3>Reacción</h3><p>Espera a que la pantalla se ponga roja y toca. Cinco intentos, media en milisegundos.</p><div class="best">Mejor media<b id="b-react">—</b></div></div></button>
+      <button class="mode" data-m="track"><span class="num">03</span><div><h3>Rastreo</h3><p>Mantén el cursor sobre la diana en movimiento durante 15 segundos.</p><div class="best">Mejor seguimiento<b id="b-track">—</b></div></div></button>
+    </div>
+  </div>
+  <footer id="ranks"></footer>
+</div>
+<script>
+const RK=[['Bronce',0],['Plata',900],['Oro',1600],['Platino',2300],['Diamante',3000],['Leyenda',3700]];
+let best=OS.load('best',{aim:0,react:0,track:0}),mode=null,state='menu',score=0,t0=0,hits=0,miss=0,left=0,react=[],rt=null,trk={on:0,tot:0},raf;
+const A=document.getElementById('arena'),C=document.getElementById('center');
+function rating(){const a=best.aim||0,r=best.react?Math.max(0,1500-(best.react-150)*6):0,t=(best.track||0)*15;return Math.round(a*.45+r*.35+t*.2)}
+function rank(){const s=rating();let r=RK[0];for(const x of RK)if(s>=x[1])r=x;return r}
+function footer(){const me=rank()[0];document.getElementById('ranks').innerHTML=RK.map(([n,v])=>`<div class="rk ${n===me?'me':rating()>=v?'on':''}"><b>${n}</b><small>${v}+ pts${n===me?' · tú: '+rating():''}</small></div>`).join('');
+ document.getElementById('b-aim').textContent=best.aim||'—';document.getElementById('b-react').textContent=best.react?best.react+' ms':'—';document.getElementById('b-track').textContent=best.track?best.track+' %':'—'}
+function hud(){document.getElementById('hm').textContent={aim:'Precisión',react:'Reacción',track:'Rastreo'}[mode]||'—';document.getElementById('hs').textContent=mode==='react'?(react.length?Math.round(react.reduce((a,b)=>a+b,0)/react.length)+' ms':'—'):mode==='track'?(trk.tot?Math.round(trk.on/trk.tot*100):0)+' %':score;document.getElementById('ht').textContent=((performance.now()-t0)/1000).toFixed(1)}
+document.querySelectorAll('.mode').forEach(b=>b.onclick=()=>start(b.dataset.m));
+function clearT(){A.querySelectorAll('.tgt').forEach(t=>t.remove())}
+function start(m){mode=m;score=0;hits=0;miss=0;react=[];trk={on:0,tot:0};document.getElementById('menu').hidden=true;clearT();C.innerHTML='';A.className='arena';
+ if(m==='aim'){left=30;t0=performance.now();state='aim';spawn()}
+ if(m==='react'){state='react';nextReact()}
+ if(m==='track'){state='track';t0=performance.now();trackStart()}
+ loop()}
+function spawn(){const r=A.getBoundingClientRect();const n=30-left;const size=Math.max(26,86-n*2);const d=document.createElement('div');d.className='tgt';d.style.width=d.style.height=size+'px';d.style.left=(size/2+Math.random()*(r.width-size))+'px';d.style.top=(size/2+Math.random()*(r.height-size))+'px';d.dataset.t=performance.now();A.appendChild(d)}
+A.addEventListener('pointerdown',e=>{const r=A.getBoundingClientRect();const x=e.clientX-r.left,y=e.clientY-r.top;
+ if(state==='aim'){const t=e.target.closest('.tgt');if(t){const dt=performance.now()-+t.dataset.t;const pts=Math.max(20,Math.round(200-dt/6));score+=pts;hits++;fx(x,y,'+'+pts);t.remove();tone(900+hits*15,.05);left--;if(left<=0)return finish();spawn()}else{miss++;score=Math.max(0,score-40);const m=document.createElement('div');m.className='miss';m.style.left=x+'px';m.style.top=y+'px';A.appendChild(m);setTimeout(()=>m.remove(),500);tone(140,.08,'square')}hud();return}
+ if(state==='react-wait'){clearTimeout(rt);A.className='arena';C.innerHTML='<h2>¡Demasiado pronto!</h2><p>Espera al rojo. Toca para reintentar.</p>';state='react-early';tone(120,.2,'square');return}
+ if(state==='react-early'){nextReact();return}
+ if(state==='react-go'){const ms=Math.round(performance.now()-t0);react.push(ms);A.className='arena';tone(1200,.08);C.innerHTML=`<h2>${ms} ms</h2><p>${ms<200?'Bestial.':ms<260?'Muy rápido.':ms<330?'Bien.':'Puedes bajar de ahí.'} Intento ${react.length} de 5 · toca para seguir</p>`;state=react.length>=5?'react-done':'react-next';hud();if(state==='react-done')setTimeout(finish,900);return}
+ if(state==='react-next'){nextReact();return}
+ if(state==='result'){state='menu';document.getElementById('menu').hidden=false;C.innerHTML='';clearT()}});
+function nextReact(){A.className='arena wait';C.innerHTML='<h2>Espera…</h2><p>Toca en cuanto la pantalla se ponga roja.</p>';state='react-wait';rt=setTimeout(()=>{A.className='arena go';C.innerHTML='<h2>¡YA!</h2>';t0=performance.now();state='react-go'},1200+Math.random()*2600)}
+let tt={x:0,y:0,vx:0,vy:0,el:null},mouse={x:-99,y:-99};A.addEventListener('pointermove',e=>{const r=A.getBoundingClientRect();mouse.x=e.clientX-r.left;mouse.y=e.clientY-r.top});
+function trackStart(){const r=A.getBoundingClientRect();tt.el=document.createElement('div');tt.el.className='tgt';tt.el.style.width=tt.el.style.height='70px';A.appendChild(tt.el);tt.x=r.width/2;tt.y=r.height/2;tt.vx=3;tt.vy=2;C.innerHTML='<p style="position:absolute;top:14px">Sigue la diana</p>'}
+function loop(){cancelAnimationFrame(raf);const f=()=>{if(state==='aim'||state==='track')hud();if(state==='track'){const r=A.getBoundingClientRect();const el=(performance.now()-t0)/1000;const sp=2.5+el*.25;if(Math.random()<.03){const a=Math.random()*6.28;tt.vx=Math.cos(a)*sp;tt.vy=Math.sin(a)*sp}tt.x+=tt.vx*(sp/3);tt.y+=tt.vy*(sp/3);if(tt.x<35||tt.x>r.width-35)tt.vx*=-1;if(tt.y<35||tt.y>r.height-35)tt.vy*=-1;tt.x=Math.max(35,Math.min(r.width-35,tt.x));tt.y=Math.max(35,Math.min(r.height-35,tt.y));tt.el.style.left=tt.x+'px';tt.el.style.top=tt.y+'px';
+  const on=Math.hypot(mouse.x-tt.x,mouse.y-tt.y)<35;trk.tot++;if(on)trk.on++;tt.el.style.background=on?'var(--grn)':'var(--red)';if(el>=15)return finish()}raf=requestAnimationFrame(f)};f()}
+function fx(x,y,t){const d=document.createElement('div');d.className='hitfx';d.style.left=x+'px';d.style.top=y+'px';d.textContent=t;A.appendChild(d);setTimeout(()=>d.remove(),600)}
+function finish(){cancelAnimationFrame(raf);clearT();A.className='arena';const before=rank()[0];let res='',sub='',nb=false;
+ if(mode==='aim'){const acc=Math.round(hits/(hits+miss||1)*100);res=score+' pts';sub=`${hits} dianas · ${acc}% de precisión · ${((performance.now()-t0)/1000).toFixed(1)} s`;if(score>best.aim){best.aim=score;nb=true}OS.xp(Math.round(score/120),'Precisión: '+score+' pts');if(acc===100)OS.achieve('ref_perfect','Pulso de cirujano','Precisión sin un solo fallo')}
+ if(mode==='react'){const avg=Math.round(react.reduce((a,b)=>a+b,0)/react.length);res=avg+' ms';const mx=Math.max(...react);sub=`<div class="bars">${react.map(v=>`<span style="height:${v/mx*80}px;background:${v===Math.min(...react)?'var(--red)':'var(--ink)'}"><i>${v}</i></span>`).join('')}</div>`;if(!best.react||avg<best.react){best.react=avg;nb=true}OS.xp(Math.max(5,Math.round((450-avg)/8)),'Reacción media '+avg+' ms');if(avg<220)OS.achieve('ref_220','Relámpago','Media de reacción por debajo de 220 ms')}
+ if(mode==='track'){const p=Math.round(trk.on/trk.tot*100);res=p+' %';sub='del tiempo sobre la diana';if(p>best.track){best.track=p;nb=true}OS.xp(Math.round(p/3),'Rastreo al '+p+'%')}
+ OS.save('best',best);const after=rank()[0];if(after!==before){OS.xp(40,'Nuevo rango: '+after);if(after==='Leyenda')OS.achieve('ref_leyenda','Leyenda','Alcanzaste el rango Leyenda en Reflejo')}
+ C.innerHTML=`<div class="k">${nb?'Nuevo récord':'Resultado'}</div><h2>${res}</h2><div style="color:var(--g2)">${sub}</div><p>${after!==before?'<b style="color:var(--red)">Subes a '+after+'.</b> ':''}Toca para volver al menú.</p>`;state='result';footer()}
+let ac;function tone(f,d,t='sine'){try{ac=ac||new AudioContext();const o=ac.createOscillator(),g=ac.createGain();o.type=t;o.frequency.value=f;g.gain.value=.05;g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d);o.connect(g).connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}}
+addEventListener('keydown',e=>{if(e.key==='Escape'&&state!=='menu'){cancelAnimationFrame(raf);clearTimeout(rt);clearT();A.className='arena';C.innerHTML='';state='menu';document.getElementById('menu').hidden=false}});
+footer();
+</script>
+</body>
+</html>

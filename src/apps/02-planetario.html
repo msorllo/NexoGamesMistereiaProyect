@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="es" data-app="planetario">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Planetario 3D</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--void:#04060c;--ice:#e9f1ff;--frost:#9cc9ff;--dim:#5d6b85;--line:rgba(156,201,255,.22);--gold:#f4d8a0}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--void);color:var(--ice);font-family:'IBM Plex Mono',ui-monospace,monospace;overflow:hidden}
+canvas{display:block;width:100%;height:100%;cursor:grab;touch-action:none}
+canvas:active{cursor:grabbing}
+header{position:fixed;top:0;left:0;right:0;padding:16px 18px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none;gap:12px}
+.brand h1{font-family:'Cormorant Garamond',serif;font-weight:500;font-style:italic;font-size:clamp(26px,4vw,40px);margin:0;letter-spacing:.01em;line-height:1}
+.brand p{margin:4px 0 0;font-size:11px;letter-spacing:.24em;color:var(--frost);text-transform:uppercase}
+.log{pointer-events:auto;border:1px solid var(--line);padding:10px 12px;font-size:11px;min-width:210px;background:rgba(4,6,12,.6);backdrop-filter:blur(6px)}
+.log h3{margin:0 0 6px;font-weight:500;letter-spacing:.22em;font-size:10px;color:var(--gold)}
+.dots{display:flex;gap:6px;margin:6px 0}
+.dots i{width:12px;height:12px;border-radius:50%;border:1px solid var(--dim);display:block}
+.dots i.on{border-color:transparent}
+.bar{height:3px;background:#101828;margin-top:6px}.bar b{display:block;height:100%;background:var(--gold);width:0;transition:width .6s}
+.panel{position:fixed;right:16px;bottom:16px;width:min(360px,calc(100% - 32px));border:1px solid var(--line);background:rgba(4,6,12,.78);backdrop-filter:blur(8px);padding:18px 18px 16px;transform:translateY(20px);opacity:0;pointer-events:none;transition:.45s cubic-bezier(.2,.8,.2,1)}
+.panel.on{transform:none;opacity:1;pointer-events:auto}
+.panel .k{font-size:10px;letter-spacing:.26em;color:var(--frost);text-transform:uppercase}
+.panel h2{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:44px;margin:2px 0 8px;line-height:1}
+.panel dl{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;margin:0 0 12px;font-size:12px}
+.panel dt{color:var(--dim);font-size:10px;letter-spacing:.14em;text-transform:uppercase}
+.panel dd{margin:0;font-variant-numeric:tabular-nums}
+.panel .fact{font-family:'Cormorant Garamond',serif;font-size:18px;font-style:italic;line-height:1.3;color:#cfdcf5;border-top:1px solid var(--line);padding-top:10px;margin:0 0 12px}
+.quiz p{margin:0 0 8px;font-size:12px;color:var(--gold)}
+.quiz button{display:block;width:100%;text-align:left;background:none;border:1px solid var(--line);color:var(--ice);font:inherit;font-size:12px;padding:8px 10px;margin-bottom:6px;cursor:pointer}
+.quiz button:hover{border-color:var(--frost)}
+.quiz button.ok{border-color:#7ee2a8;color:#7ee2a8}.quiz button.ko{border-color:#ff7a7a;color:#ff7a7a;opacity:.7}
+.close{position:absolute;top:10px;right:12px;background:none;border:0;color:var(--dim);font:inherit;font-size:18px;cursor:pointer}
+.controls{position:fixed;left:16px;bottom:16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:11px;max-width:calc(100% - 32px)}
+.controls button,.controls label{background:rgba(4,6,12,.6);border:1px solid var(--line);color:var(--ice);font:inherit;font-size:11px;padding:8px 10px;cursor:pointer;letter-spacing:.08em}
+.controls button:hover{border-color:var(--frost)}
+.controls input{accent-color:var(--gold);width:90px;vertical-align:middle}
+.hint{position:fixed;left:50%;top:50%;transform:translate(-50%,120px);font-size:11px;letter-spacing:.2em;color:var(--dim);pointer-events:none;transition:opacity 1s;text-transform:uppercase;text-align:center}
+.label{position:fixed;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--frost);pointer-events:none;transform:translate(-50%,0);white-space:nowrap;text-shadow:0 0 6px #000}
+@media (max-width:640px){.panel{bottom:auto;top:110px}.log{min-width:0}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<header>
+  <div class="brand"><h1>Planetario</h1><p>Cuaderno de exploración</p></div>
+  <div class="log"><h3>BITÁCORA DE VISITAS</h3><div class="dots" id="dots"></div><div id="logtxt">0 de 8 mundos visitados</div><div class="bar"><b id="bar"></b></div></div>
+</header>
+<div id="labels"></div>
+<div class="hint" id="hint">Arrastra para orbitar · rueda para acercar · toca un planeta</div>
+<div class="controls">
+  <button id="home">⟲ Vista solar</button>
+  <label>Tiempo <input id="warp" type="range" min="0" max="40" value="6"></label>
+  <button id="tour">Tour guiado</button>
+</div>
+<div class="panel" id="panel">
+  <button class="close" id="pclose" aria-label="Cerrar">×</button>
+  <div class="k" id="pk"></div><h2 id="pn"></h2>
+  <dl id="pd"></dl>
+  <p class="fact" id="pf"></p>
+  <div class="quiz" id="pq"></div>
+</div>
+<script>
+const P=[
+ {n:'Mercurio',c:['#b7aca4','#6f625a'],r:5,o:70,sp:4.15,k:'Planeta rocoso · 1.º',d:{'Diámetro':'4.879 km','Distancia':'0,39 UA','Año':'88 días','Día':'59 días'},f:'Un día solar en Mercurio (amanecer a amanecer) dura 176 días terrestres: dos de sus años.',q:['¿Qué planeta tiene la mayor diferencia de temperatura entre día y noche?',['Mercurio','Marte','Neptuno'],0]},
+ {n:'Venus',c:['#f3d59a','#b98a45'],r:9,o:100,sp:1.62,k:'Planeta rocoso · 2.º',d:{'Diámetro':'12.104 km','Distancia':'0,72 UA','Año':'225 días','Superficie':'≈ 464 °C'},f:'Gira al revés que casi todos: allí el Sol sale por el oeste.',q:['¿Por qué Venus es más caliente que Mercurio?',['Está más cerca del Sol','Su atmósfera de CO₂ atrapa el calor','Tiene volcanes activos en toda la superficie'],1]},
+ {n:'Tierra',c:['#4f9df0','#1d4c8f'],r:9.5,o:135,sp:1,k:'Planeta rocoso · 3.º',d:{'Diámetro':'12.742 km','Distancia':'1 UA','Año':'365,25 días','Lunas':'1'},f:'La luz del Sol tarda unos 8 minutos y 20 segundos en llegar hasta aquí.',q:['¿Cuánto tarda la luz del Sol en llegar a la Tierra?',['8 segundos','Unos 8 minutos','Una hora'],1],moon:1},
+ {n:'Marte',c:['#e0714a','#8a2a10'],r:7,o:170,sp:.53,k:'Planeta rocoso · 4.º',d:{'Diámetro':'6.779 km','Distancia':'1,52 UA','Año':'687 días','Lunas':'2'},f:'El Olympus Mons mide unos 22 km de altura: casi tres Everest apilados.',q:['¿Cómo se llaman las lunas de Marte?',['Fobos y Deimos','Ío y Europa','Titán y Rea'],0]},
+ {n:'Júpiter',c:['#e8c4a0','#9a6b45'],r:24,o:240,sp:.084,k:'Gigante gaseoso · 5.º',d:{'Diámetro':'139.820 km','Distancia':'5,2 UA','Año':'11,9 años','Día':'9 h 56 min'},f:'La Gran Mancha Roja es una tormenta más grande que la Tierra que dura siglos.',q:['¿Cuál es el día más corto del sistema solar?',['El de Júpiter','El de Mercurio','El de la Tierra'],0],bands:1},
+ {n:'Saturno',c:['#f1dfaa','#a88a4f'],r:20,o:320,sp:.034,k:'Gigante gaseoso · 6.º',d:{'Diámetro':'116.460 km','Distancia':'9,5 UA','Año':'29,4 años','Densidad':'Menor que el agua'},f:'Sus anillos miden cientos de miles de km de ancho, pero en general apenas decenas de metros de grosor.',q:['¿De qué están hechos sobre todo los anillos de Saturno?',['Gas helado','Hielo de agua y roca','Polvo metálico'],1],ring:1,bands:1},
+ {n:'Urano',c:['#bff1f2','#5fb3bd'],r:14,o:390,sp:.012,k:'Gigante helado · 7.º',d:{'Diámetro':'50.724 km','Distancia':'19,2 UA','Año':'84 años','Inclinación':'98°'},f:'Rueda tumbado de lado: cada polo pasa 42 años seguidos de día.',q:['¿Qué tiene de especial el eje de Urano?',['Casi no está inclinado','Está tumbado, unos 98°','Cambia cada año'],1],ring:2},
+ {n:'Neptuno',c:['#6f8ff5','#223aa3'],r:13.5,o:450,sp:.006,k:'Gigante helado · 8.º',d:{'Diámetro':'49.244 km','Distancia':'30,1 UA','Año':'164,8 años','Viento':'hasta 2.000 km/h'},f:'Fue el primer planeta encontrado con matemáticas antes que con un telescopio (1846).',q:['¿Cómo se descubrió Neptuno?',['Por casualidad con prismáticos','Predicho con cálculos y luego observado','Lo fotografió la Voyager'],1]},
+];
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');let W,H,DPR;
+function rs(){DPR=Math.min(devicePixelRatio||1,2);W=cv.width=innerWidth*DPR;H=cv.height=innerHeight*DPR}rs();addEventListener('resize',rs);
+const cam={yaw:.6,pitch:.42,dist:780,tx:0,ty:0,tz:0,goal:null};const goalCam={yaw:.6,pitch:.42,dist:780};
+let t=Math.random()*1000,warp=6,focus=-1;
+const visited=OS.load('visited',{}),answered=OS.load('answered',{});
+const stars=[];for(let i=0;i<900;i++){const u=Math.random()*2-1,a=Math.random()*Math.PI*2,r=Math.sqrt(1-u*u);stars.push([r*Math.cos(a)*4000,u*4000,r*Math.sin(a)*4000,Math.random()])}
+function pos(p,i){const a=t*p.sp*0.05+i*1.7;return [Math.cos(a)*p.o,0,Math.sin(a)*p.o]}
+let R,U,F,C;
+function basis(){const cy=Math.cos(cam.yaw),sy=Math.sin(cam.yaw),cp=Math.cos(cam.pitch),sp=Math.sin(cam.pitch);
+ C=[cam.tx+cam.dist*cp*sy,cam.ty+cam.dist*sp,cam.tz+cam.dist*cp*cy];F=[-cp*sy,-sp,-cp*cy];R=[cy,0,-sy];U=[-sp*sy*-1*-1,cp,-sp*cy];U=[F[1]*R[2]-F[2]*R[1],F[2]*R[0]-F[0]*R[2],F[0]*R[1]-F[1]*R[0]];U=U.map(v=>-v)}
+function proj(p){const d=[p[0]-C[0],p[1]-C[1],p[2]-C[2]];const z=d[0]*F[0]+d[1]*F[1]+d[2]*F[2];if(z<1)return null;const f=Math.min(W,H)*1.1;return {x:W/2+(d[0]*R[0]+d[1]*R[1]+d[2]*R[2])*f/z,y:H/2-(d[0]*U[0]+d[1]*U[1]+d[2]*U[2])*f/z,s:f/z,z}}
+function sphere(sx,sy,rad,cols,light,p){const g=ctx.createRadialGradient(sx+light[0]*rad*.5,sy+light[1]*rad*.5,rad*.1,sx,sy,rad*1.05);g.addColorStop(0,cols[0]);g.addColorStop(.75,cols[1]);g.addColorStop(1,'#05070c');
+ ctx.fillStyle=g;ctx.beginPath();ctx.arc(sx,sy,rad,0,Math.PI*2);ctx.fill();
+ if(p&&p.bands){ctx.save();ctx.beginPath();ctx.arc(sx,sy,rad,0,Math.PI*2);ctx.clip();ctx.globalAlpha=.22;for(let i=-5;i<=5;i++){ctx.fillStyle=i%2?'#5a3a22':'#fff5e0';ctx.fillRect(sx-rad,sy+i*rad*.18-rad*.05,rad*2,rad*.09)}if(p.n==='Júpiter'){ctx.globalAlpha=.55;ctx.fillStyle='#b5482c';ctx.beginPath();ctx.ellipse(sx+rad*.3,sy+rad*.32,rad*.16,rad*.09,0,0,Math.PI*2);ctx.fill()}ctx.restore()}
+ if(p&&p.n==='Tierra'){ctx.save();ctx.beginPath();ctx.arc(sx,sy,rad,0,Math.PI*2);ctx.clip();ctx.globalAlpha=.55;ctx.fillStyle='#4f9a4a';const o=(t*0.4)%(rad*4);for(let k=0;k<4;k++){ctx.beginPath();ctx.ellipse(sx-rad*2+((k*rad*1.3+o)%(rad*4)),sy+(k%2?-.3:.25)*rad,rad*.35,rad*.22,k,0,Math.PI*2);ctx.fill()}ctx.restore()}
+ // terminator shade
+ const sh=ctx.createLinearGradient(sx+light[0]*rad,sy+light[1]*rad,sx-light[0]*rad,sy-light[1]*rad);sh.addColorStop(0,'rgba(0,0,0,0)');sh.addColorStop(.55,'rgba(0,0,0,.05)');sh.addColorStop(1,'rgba(0,0,0,.78)');ctx.fillStyle=sh;ctx.beginPath();ctx.arc(sx,sy,rad,0,Math.PI*2);ctx.fill()}
+function ring(sx,sy,rad,p,front){const tilt=Math.max(.12,Math.abs(Math.sin(cam.pitch)));ctx.save();ctx.beginPath();ctx.ellipse(sx,sy,rad*2.2,rad*2.2*tilt,-.25,front?0:Math.PI,front?Math.PI:Math.PI*2);ctx.ellipse(sx,sy,rad*1.35,rad*1.35*tilt,-.25,front?Math.PI:Math.PI*2,front?0:Math.PI,true);ctx.closePath();
+ const g=ctx.createRadialGradient(sx,sy,rad*1.3,sx,sy,rad*2.2);if(p.ring===1){g.addColorStop(0,'rgba(230,210,160,.25)');g.addColorStop(.4,'rgba(240,222,176,.75)');g.addColorStop(.55,'rgba(40,30,20,.3)');g.addColorStop(.7,'rgba(220,200,150,.6)');g.addColorStop(1,'rgba(200,180,140,.1)')}else{g.addColorStop(0,'rgba(190,240,240,.05)');g.addColorStop(.8,'rgba(190,240,240,.35)');g.addColorStop(1,'rgba(190,240,240,0)')}
+ ctx.fillStyle=g;ctx.fill();ctx.restore()}
+const labels=document.getElementById('labels');const lab=P.map(p=>{const d=document.createElement('div');d.className='label';d.textContent=p.n;labels.appendChild(d);return d});
+let hits=[];
+function frame(){basis();ctx.fillStyle='#04060c';ctx.fillRect(0,0,W,H);
+ // milky band
+ for(const s of stars){const q=proj([s[0]+C[0],s[1]+C[1],s[2]+C[2]]);if(!q)continue;ctx.fillStyle=`rgba(${200+s[3]*55|0},${215+s[3]*40|0},255,${.25+s[3]*.6})`;const z=s[3]>.97?2*DPR:1*DPR;ctx.fillRect(q.x,q.y,z,z)}
+ // orbits
+ ctx.lineWidth=DPR;P.forEach((p,i)=>{ctx.strokeStyle=focus===i?'rgba(244,216,160,.55)':visited[p.n]?'rgba(156,201,255,.28)':'rgba(156,201,255,.12)';ctx.beginPath();let first=true;for(let a=0;a<=64;a++){const q=proj([Math.cos(a/64*Math.PI*2)*p.o,0,Math.sin(a/64*Math.PI*2)*p.o]);if(!q){first=true;continue}first?ctx.moveTo(q.x,q.y):ctx.lineTo(q.x,q.y);first=false}ctx.stroke()});
+ // bodies
+ const sun=proj([0,0,0]);const bodies=P.map((p,i)=>({p,i,w:pos(p,i)})).map(b=>({...b,q:proj(b.w)})).filter(b=>b.q);
+ const list=[...bodies];if(sun)list.push({sun:1,q:sun});list.sort((a,b)=>b.q.z-a.q.z);hits=[];
+ for(const b of list){if(b.sun){const r=34*b.q.s;const g=ctx.createRadialGradient(b.q.x,b.q.y,r*.2,b.q.x,b.q.y,r*4);g.addColorStop(0,'rgba(255,250,220,1)');g.addColorStop(.25,'rgba(255,210,120,.9)');g.addColorStop(.5,'rgba(255,150,60,.18)');g.addColorStop(1,'rgba(255,120,40,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(b.q.x,b.q.y,r*4,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff6d8';ctx.beginPath();ctx.arc(b.q.x,b.q.y,r,0,Math.PI*2);ctx.fill();continue}
+  const rad=Math.max(1.5*DPR,b.p.r*b.q.s);let lx=(sun?sun.x:W/2)-b.q.x,ly=(sun?sun.y:H/2)-b.q.y;const lm=Math.hypot(lx,ly)||1;const L=[lx/lm,ly/lm];
+  if(b.p.ring)ring(b.q.x,b.q.y,rad,b.p,false);sphere(b.q.x,b.q.y,rad,b.p.c,L,b.p);if(b.p.ring)ring(b.q.x,b.q.y,rad,b.p,true);
+  if(b.p.moon){const ma=t*.3;const mq=proj([b.w[0]+Math.cos(ma)*22,Math.sin(ma)*4,b.w[2]+Math.sin(ma)*22]);if(mq)sphere(mq.x,mq.y,Math.max(1,2.6*mq.s),['#e8e8e8','#8a8a8a'],L)}
+  if(focus===b.i){ctx.strokeStyle='rgba(244,216,160,.8)';ctx.lineWidth=DPR;ctx.beginPath();ctx.arc(b.q.x,b.q.y,rad+8*DPR,0,Math.PI*2);ctx.stroke()}
+  hits.push({i:b.i,x:b.q.x/DPR,y:b.q.y/DPR,r:Math.max(14,rad/DPR+6)});
+  const l=lab[b.i];l.style.left=b.q.x/DPR+'px';l.style.top=(b.q.y/DPR+rad/DPR+8)+'px';l.style.color=visited[b.p.n]?'#f4d8a0':'';}
+ P.forEach((p,i)=>{if(!bodies.find(b=>b.i===i))lab[i].style.left='-999px'});
+}
+function upd(dt){t+=dt*warp*.35;
+ if(focus>=0){const w=pos(P[focus],focus);cam.tx+=(w[0]-cam.tx)*.08;cam.ty+=(w[1]-cam.ty)*.08;cam.tz+=(w[2]-cam.tz)*.08;cam.dist+=(goalCam.dist-cam.dist)*.06}
+ else{cam.tx*=.92;cam.ty*=.92;cam.tz*=.92;if(goalCam.dist)cam.dist+=(goalCam.dist-cam.dist)*.05}
+ if(!drag&&focus<0)cam.yaw+=dt*.02;
+ if(tour){tourT-=dt;if(tourT<=0){tourI++;if(tourI>=P.length){tour=false;select(-1)}else{select(tourI);tourT=6}}}
+}
+let drag=null;cv.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,moved:0};cv.setPointerCapture(e.pointerId);document.getElementById('hint').style.opacity=0});
+cv.addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.moved+=Math.abs(dx)+Math.abs(dy);cam.yaw-=dx*.005;cam.pitch=Math.max(-1.35,Math.min(1.45,cam.pitch+dy*.005));drag.x=e.clientX;drag.y=e.clientY});
+cv.addEventListener('pointerup',e=>{if(drag&&drag.moved<6){const h=hits.filter(h=>Math.hypot(h.x-e.clientX,h.y-e.clientY)<h.r).sort((a,b)=>a.r-b.r)[0];if(h)select(h.i)}drag=null});
+cv.addEventListener('wheel',e=>{e.preventDefault();goalCam.dist=Math.max(focus>=0?40:200,Math.min(1800,(goalCam.dist||cam.dist)*(1+e.deltaY*.001)))},{passive:false});
+function select(i){focus=i;document.getElementById('hint').style.opacity=0;const pn=document.getElementById('panel');if(i<0){pn.classList.remove('on');goalCam.dist=780;return}
+ const p=P[i];goalCam.dist=Math.max(70,p.r*7);document.getElementById('pk').textContent=p.k;document.getElementById('pn').textContent=p.n;
+ document.getElementById('pd').innerHTML=Object.entries(p.d).map(([k,v])=>`<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');document.getElementById('pf').textContent='“'+p.f+'”';
+ const q=document.getElementById('pq');if(answered[p.n]){q.innerHTML=`<p>✓ Pregunta del observatorio resuelta</p>`}else{q.innerHTML=`<p>Pregunta del observatorio · +20 XP</p><div>${p.q[0]}</div><br>`+p.q[1].map((o,k)=>`<button data-k="${k}">${o}</button>`).join('');
+  q.querySelectorAll('button').forEach(b=>b.onclick=()=>{const k=+b.dataset.k;q.querySelectorAll('button').forEach(x=>x.disabled=true);if(k===p.q[2]){b.classList.add('ok');answered[p.n]=1;OS.save('answered',answered);OS.xp(20,'Respuesta correcta sobre '+p.n);if(Object.keys(answered).length===8)OS.achieve('plan_sabio','Astrónomo sabio','Acertaste las 8 preguntas del observatorio')}else{b.classList.add('ko');q.querySelectorAll('button')[p.q[2]].classList.add('ok');setTimeout(()=>select(i),1800)}})}
+ pn.classList.add('on');
+ if(!visited[p.n]){visited[p.n]=1;OS.save('visited',visited);OS.xp(15,'Visitaste '+p.n);log();if(Object.keys(visited).length===8)OS.achieve('plan_all','Gran viajero','Visitaste los 8 planetas');if(p.n==='Saturno')OS.achieve('plan_rings','Señor de los anillos','Observaste Saturno de cerca')}}
+function log(){const n=Object.keys(visited).length;document.getElementById('dots').innerHTML=P.map(p=>`<i class="${visited[p.n]?'on':''}" style="${visited[p.n]?`background:${p.c[0]}`:''}" title="${p.n}"></i>`).join('');document.getElementById('logtxt').textContent=`${n} de 8 mundos visitados`;document.getElementById('bar').style.width=n/8*100+'%'}
+document.getElementById('pclose').onclick=()=>select(-1);document.getElementById('home').onclick=()=>{tour=false;select(-1)};
+document.getElementById('warp').oninput=e=>warp=+e.target.value;
+let tour=false,tourI=0,tourT=0;document.getElementById('tour').onclick=()=>{tour=true;tourI=0;tourT=6;select(0)};
+log();let last=performance.now();(function L(n){const dt=Math.max(0,Math.min(.05,(n-last)/1000));last=n;upd(dt);frame();requestAnimationFrame(L)})(last);
+</script>
+</body>
+</html>

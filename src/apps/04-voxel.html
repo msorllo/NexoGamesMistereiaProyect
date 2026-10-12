@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="es" data-app="voxel">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Voxel Isla</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--sky1:#9fd8ff;--sky2:#e6f6ff;--ink:#2d3a5c;--coral:#ff7a59;--card:#ffffff;--soft:#eef4fb}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;font-family:'Fredoka',system-ui,sans-serif;color:var(--ink);background:linear-gradient(var(--sky1),var(--sky2));overflow:hidden;user-select:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;touch-action:none}
+.top{position:fixed;top:14px;left:16px;right:16px;display:flex;justify-content:space-between;gap:10px;align-items:flex-start;pointer-events:none;flex-wrap:wrap}
+.title{font-weight:700;font-size:28px;letter-spacing:-.01em;line-height:1;background:var(--card);padding:10px 16px;border-radius:18px;box-shadow:0 6px 0 #c9d9ec}
+.title small{display:block;font-size:12px;font-weight:500;color:#6c7a99;margin-top:3px}
+.quests{pointer-events:auto;background:var(--card);border-radius:18px;padding:12px 14px;box-shadow:0 6px 0 #c9d9ec;width:280px;max-width:100%}
+.quests h3{margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:#6c7a99;font-weight:600;display:flex;justify-content:space-between}
+.q{display:flex;gap:10px;align-items:center;padding:6px 0;border-top:1px dashed #dbe5f1;font-size:14px}
+.q:first-of-type{border-top:0}
+.q .ck{width:22px;height:22px;border-radius:7px;border:2px solid #c9d9ec;flex:none;display:grid;place-items:center;font-size:13px;color:#fff}
+.q.done .ck{background:#5cc46a;border-color:#5cc46a}
+.q.done span{color:#8a97b3;text-decoration:line-through}
+.q em{font-style:normal;font-size:11px;color:var(--coral);display:block}
+.q .pb{height:5px;background:var(--soft);border-radius:4px;margin-top:3px;overflow:hidden}.q .pb i{display:block;height:100%;background:var(--coral);border-radius:4px}
+.bar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:6px;background:var(--card);padding:8px;border-radius:22px;box-shadow:0 6px 0 #c9d9ec;max-width:calc(100% - 32px);overflow-x:auto}
+.bar button{border:0;background:var(--soft);border-radius:14px;width:52px;height:56px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font:inherit;font-size:10px;color:var(--ink);flex:none;position:relative;transition:transform .15s}
+.bar button:hover{transform:translateY(-3px)}
+.bar button.sel{background:var(--ink);color:#fff}
+.bar button.lock{opacity:.35;cursor:not-allowed}
+.bar button .sw{width:24px;height:24px;border-radius:6px;box-shadow:inset 0 -5px 0 rgba(0,0,0,.18)}
+.bar .sep{width:2px;background:var(--soft);margin:4px 2px;flex:none}
+.bar button:focus-visible{outline:3px solid var(--coral)}
+.tools{position:fixed;right:16px;bottom:96px;display:flex;flex-direction:column;gap:8px}
+.tools button{width:48px;height:48px;border-radius:16px;border:0;background:var(--card);box-shadow:0 4px 0 #c9d9ec;font-size:20px;cursor:pointer;color:var(--ink)}
+.tools button.on{background:var(--coral);color:#fff;box-shadow:0 4px 0 #c65438}
+.count{position:fixed;left:16px;bottom:96px;background:var(--card);border-radius:16px;padding:8px 14px;box-shadow:0 4px 0 #c9d9ec;font-weight:600}
+.count b{font-size:22px}
+.pop{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%) scale(.8);background:var(--ink);color:#fff;padding:14px 22px;border-radius:20px;font-weight:600;font-size:18px;opacity:0;transition:.35s;pointer-events:none;text-align:center}
+.pop.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+@media (max-width:640px){.quests{width:100%}.tools{bottom:100px}.count{display:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="top">
+  <div class="title">Voxel Isla<small>Construye tu isla flotante</small></div>
+  <div class="quests" id="quests"></div>
+</div>
+<div class="count"><b id="cnt">0</b> bloques</div>
+<div class="tools">
+  <button id="rot" title="Girar vista" aria-label="Girar vista">⟳</button>
+  <button id="era" title="Modo borrar" aria-label="Modo borrar">⌫</button>
+  <button id="night" title="Día / noche" aria-label="Día o noche">☾</button>
+</div>
+<div class="bar" id="bar"></div>
+<div class="pop" id="pop"></div>
+<script>
+const B={
+ grass:{n:'Hierba',t:'#7ccf6a',s:'#8b6a44',lock:0},dirt:{n:'Tierra',t:'#a07a52',s:'#8b6a44',lock:0},stone:{n:'Piedra',t:'#b3bac6',s:'#8c93a1',lock:0},sand:{n:'Arena',t:'#f3dca0',s:'#dcc184',lock:0},water:{n:'Agua',t:'#5fb8f2',s:'#3f93d1',lock:0,alpha:.78},
+ wood:{n:'Madera',t:'#c79a64',s:'#8a5a33',lock:1},leaf:{n:'Hojas',t:'#4fae5d',s:'#3b8c49',lock:1},brick:{n:'Ladrillo',t:'#e0775a',s:'#b85a41',lock:2},flower:{n:'Flores',t:'#7ccf6a',s:'#8b6a44',lock:3,flower:1},crystal:{n:'Cristal',t:'#c7a6ff',s:'#9a76e8',lock:4,glow:1},gold:{n:'Oro',t:'#ffd24a',s:'#e0a92a',lock:5,glow:1},
+};
+const QUESTS=[
+ {t:'Coloca 10 bloques',goal:10,val:()=>placed,rw:'Madera + Hojas'},
+ {t:'Levanta algo de 10 bloques de alto',goal:10,val:()=>maxH(),rw:'Ladrillo'},
+ {t:'Planta 3 árboles (hojas sobre madera)',goal:3,val:()=>trees(),rw:'Flores'},
+ {t:'Crea un lago: 8 bloques de agua',goal:8,val:()=>count('water')-baseWater,rw:'Cristal'},
+ {t:'Isla épica: 120 bloques colocados',goal:120,val:()=>placed,rw:'Oro'},
+];
+const S=16,Z=14;let vox=OS.load('world',null),placed=OS.load('placed',0),qdone=OS.load('qdone',[]),rot=0,erase=false,night=false,cur='grass';
+function key(x,y,z){return x+','+y+','+z}
+function seed(){vox={};for(let x=0;x<S;x++)for(let y=0;y<S;y++){const d=Math.hypot(x-S/2+.5,y-S/2+.5);const h=d<3.2?3:d<5.2?2:d<6.6?1:0;if(d>7.6)continue;for(let z=0;z<h;z++)vox[key(x,y,z)]=z===h-1?(h===1?'sand':'grass'):(z===0?'stone':'dirt');if(h===0)vox[key(x,y,0)]='water'}
+ // starter tree
+ for(let z=3;z<6;z++)vox[key(7,6,z)]='wood';for(const [a,b] of [[0,0],[1,0],[-1,0],[0,1],[0,-1]])vox[key(7+a,6+b,6)]='leaf';vox[key(7,6,7)]='leaf'}
+if(!vox){seed();OS.save('baseWater',Object.values(vox).filter(v=>v==='water').length)}const baseWater=OS.load('baseWater',60);
+function count(t){return Object.values(vox).filter(v=>v===t).length}
+function maxH(){let m=0;for(const k in vox){const z=+k.split(',')[2];m=Math.max(m,z+1)}return m}
+function trees(){let n=0;for(const k in vox){if(vox[k]!=='wood')continue;const [x,y,z]=k.split(',').map(Number);if(vox[key(x,y,z+1)]==='leaf')n++}return n}
+function unlocked(b){return B[b].lock===0||qdone.includes(B[b].lock-1)}
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');let W,H,D,TW,ox,oy;
+function rs(){D=Math.min(devicePixelRatio||1,2);W=cv.width=innerWidth*D;H=cv.height=innerHeight*D;TW=Math.min(W/(S*1.25),H/(S*.95))*1.0;ox=W/2;oy=H*.5-S*TW/4+TW*1.2}rs();addEventListener('resize',rs);
+function R(x,y){switch(rot){case 0:return[x,y];case 1:return[S-1-y,x];case 2:return[S-1-x,S-1-y];default:return[y,S-1-x]}}
+function RI(a,b){switch(rot){case 0:return[a,b];case 1:return[b,S-1-a];case 2:return[S-1-a,S-1-b];default:return[S-1-b,a]}}
+function scr(rx,ry,z){return[ox+(rx-ry)*TW/2,oy+(rx+ry)*TW/4-z*TW/2]}
+function shadeC(hex,f){const n=parseInt(hex.slice(1),16);let r=n>>16,g=n>>8&255,b=n&255;if(night){r*=.45;g*=.5;b*=.75}return`rgb(${Math.min(255,r*f)|0},${Math.min(255,g*f)|0},${Math.min(255,b*f)|0})`}
+let hover=null,t=0;const faces=[];
+function draw(){t+=.016;const g=ctx.createLinearGradient(0,0,0,H);if(night){g.addColorStop(0,'#141b3a');g.addColorStop(1,'#3a3f72')}else{g.addColorStop(0,'#9fd8ff');g.addColorStop(1,'#e6f6ff')}ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+ if(night){ctx.fillStyle='#fff';for(let i=0;i<80;i++)ctx.fillRect(i*7919%W,i*104729%(H*.6),D*1.5,D*1.5)}
+ // clouds
+ ctx.fillStyle=night?'rgba(255,255,255,.08)':'rgba(255,255,255,.85)';for(let i=0;i<5;i++){const cx=((t*12*D+i*W*.27)%(W+400*D))-200*D,cy=H*(.12+i*.07);for(let k=0;k<4;k++){ctx.beginPath();ctx.arc(cx+k*28*D,cy+(k%2)*-10*D,26*D,0,7);ctx.fill()}}
+ // island underside
+ const list=[];for(const k in vox){const [x,y,z]=k.split(',').map(Number);const [rx,ry]=R(x,y);list.push({x,y,z,rx,ry,t:vox[k]})}
+ list.sort((a,b)=>(a.rx+a.ry)-(b.rx+b.ry)||a.z-b.z||a.rx-b.rx);
+ // floating rock underside
+ ctx.fillStyle=night?'#2a2440':'#8c7760';ctx.beginPath();const [ax,ay]=scr(S/2,S/2,0);ctx.moveTo(ax-TW*S*.28,ay+TW*.1);ctx.quadraticCurveTo(ax-TW*2,ay+TW*S*.35,ax,ay+TW*S*.45+Math.sin(t)*TW*.2);ctx.quadraticCurveTo(ax+TW*2,ay+TW*S*.35,ax+TW*S*.28,ay+TW*.1);ctx.fill();
+ faces.length=0;
+ for(const v of list){const b=B[v.t];const [sx,sy]=scr(v.rx,v.ry,v.z);const w=TW/2,h=TW/4,bh=TW/2;
+  ctx.globalAlpha=b.alpha||1;let wob=v.t==='water'?Math.sin(t*2+v.x+v.y)*TW*.02:0;
+  const top=[[sx,sy-bh+wob],[sx+w,sy-bh+h+wob],[sx,sy-bh+2*h+wob],[sx-w,sy-bh+h+wob]];
+  const left=[[sx-w,sy-bh+h],[sx,sy-bh+2*h],[sx,sy+2*h],[sx-w,sy+h]];
+  const right=[[sx,sy-bh+2*h],[sx+w,sy-bh+h],[sx+w,sy+h],[sx,sy+2*h]];
+  const occ=(dx,dy,dz)=>{const [a,c]=RI(v.rx+dx,v.ry+dy);return vox[key(a,c,v.z+dz)]&&vox[key(a,c,v.z+dz)]!=='water'};
+  const dl=!occ(0,1,0),dr=!occ(1,0,0),dt=!occ(0,0,1)||b.alpha;if(dl)poly(left,shadeC(b.s,.92));if(dr)poly(right,shadeC(b.s,.75));if(dt)poly(top,shadeC(b.t,1));
+  if((v.t==='grass'||v.t==='flower')&&dl){ctx.fillStyle=shadeC(B.grass.t,.8);ctx.beginPath();ctx.moveTo(sx-w,sy-bh+h);ctx.lineTo(sx,sy-bh+2*h);ctx.lineTo(sx,sy-bh+2*h+TW*.07);ctx.lineTo(sx-w,sy-bh+h+TW*.07);ctx.fill()}if((v.t==='grass'||v.t==='flower')&&dr){ctx.fillStyle=shadeC(B.grass.t,.68);ctx.beginPath();ctx.moveTo(sx,sy-bh+2*h);ctx.lineTo(sx+w,sy-bh+h);ctx.lineTo(sx+w,sy-bh+h+TW*.07);ctx.lineTo(sx,sy-bh+2*h+TW*.07);ctx.fill()}
+  if(b.flower&&!occ(0,0,1)){for(let i=0;i<4;i++){ctx.fillStyle=['#ff6b9a','#ffd24a','#fff','#ff7a59'][i];ctx.beginPath();ctx.arc(sx+(i%2?.3:-.3)*w,sy-bh+h+(i<2?-.3:.3)*h,TW*.05,0,7);ctx.fill()}}
+  if(v.t==='brick'){ctx.strokeStyle='rgba(255,255,255,.25)';ctx.lineWidth=D;for(let i=1;i<3;i++){ctx.beginPath();ctx.moveTo(sx-w,sy-bh+h+i*bh/3);ctx.lineTo(sx,sy-bh+2*h+i*bh/3);ctx.lineTo(sx+w,sy-bh+h+i*bh/3);ctx.stroke()}}
+  if(b.glow){ctx.globalAlpha=.25+Math.sin(t*3+v.x)*.12;ctx.fillStyle=b.t;ctx.beginPath();ctx.arc(sx,sy,TW*.7,0,7);ctx.fill()}
+  ctx.globalAlpha=1;
+  if(dt)faces.push({v,poly:top,n:[0,0,1]});if(dl)faces.push({v,poly:left,n:[0,1,0]});if(dr)faces.push({v,poly:right,n:[1,0,0]});}
+ if(hover){const {v,n}=hover;let tx,ty,tz;if(erase){tx=v.rx;ty=v.ry;tz=v.z}else{tx=v.rx+n[0];ty=v.ry+n[1];tz=v.z+n[2]}const [sx,sy]=scr(tx,ty,tz);const w=TW/2,h=TW/4,bh=TW/2;ctx.strokeStyle=erase?'#ff4d4d':'#fff';ctx.lineWidth=2*D;ctx.setLineDash([6*D,4*D]);ctx.beginPath();ctx.moveTo(sx,sy-bh);ctx.lineTo(sx+w,sy-bh+h);ctx.lineTo(sx+w,sy+h);ctx.lineTo(sx,sy+2*h);ctx.lineTo(sx-w,sy+h);ctx.lineTo(sx-w,sy-bh+h);ctx.closePath();ctx.moveTo(sx-w,sy-bh+h);ctx.lineTo(sx,sy-bh+2*h);ctx.lineTo(sx+w,sy-bh+h);ctx.moveTo(sx,sy-bh+2*h);ctx.lineTo(sx,sy+2*h);ctx.stroke();ctx.setLineDash([])}
+ requestAnimationFrame(draw)}
+function poly(p,c){ctx.fillStyle=c;ctx.beginPath();ctx.moveTo(p[0][0],p[0][1]);for(let i=1;i<p.length;i++)ctx.lineTo(p[i][0],p[i][1]);ctx.closePath();ctx.fill();ctx.strokeStyle='rgba(45,58,92,.12)';ctx.lineWidth=D*.8;ctx.stroke()}
+function inPoly(x,y,p){let c=false;for(let i=0,j=p.length-1;i<p.length;j=i++){if((p[i][1]>y)!==(p[j][1]>y)&&x<(p[j][0]-p[i][0])*(y-p[i][1])/(p[j][1]-p[i][1])+p[i][0])c=!c}return c}
+function pick(e){const x=e.clientX*D,y=e.clientY*D;for(let i=faces.length-1;i>=0;i--)if(inPoly(x,y,faces[i].poly))return faces[i];return null}
+cv.addEventListener('pointermove',e=>{hover=pick(e)});
+cv.addEventListener('contextmenu',e=>e.preventDefault());
+cv.addEventListener('pointerdown',e=>{const f=pick(e);if(!f)return;const rm=erase||e.button===2;const {v,n}=f;
+ if(rm){if(Object.keys(vox).length<=1)return;delete vox[key(v.x,v.y,v.z)];blip(220)}else{const [a,b]=RI(v.rx+n[0],v.ry+n[1]);const z=v.z+n[2];if(a<0||b<0||a>=S||b>=S||z>=Z)return;if(vox[key(a,b,z)])return;vox[key(a,b,z)]=cur;placed++;OS.save('placed',placed);blip(520+z*40)}
+ OS.save('world',vox);hover=pick(e);checkQ()});
+let ac;function blip(f){try{ac=ac||new AudioContext();const o=ac.createOscillator(),g=ac.createGain();o.type='sine';o.frequency.value=f;g.gain.value=.08;g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+.12);o.connect(g).connect(ac.destination);o.start();o.stop(ac.currentTime+.12)}catch(e){}}
+function checkQ(){QUESTS.forEach((q,i)=>{if(!qdone.includes(i)&&q.val()>=q.goal){qdone.push(i);OS.save('qdone',qdone);pop('¡Misión cumplida!<br><small>Desbloqueado: '+q.rw+'</small>');OS.xp(30+i*15,q.t);bar()}});if(qdone.length===QUESTS.length)OS.achieve('voxel_all','Arquitecta de islas','Completaste todas las misiones de Voxel Isla');renderQ();document.getElementById('cnt').textContent=Object.keys(vox).length}
+function renderQ(){document.getElementById('quests').innerHTML=`<h3>Misiones <span>${qdone.length}/${QUESTS.length}</span></h3>`+QUESTS.map((q,i)=>{const d=qdone.includes(i);const p=Math.max(0,Math.min(1,q.val()/q.goal));return`<div class="q ${d?'done':''}"><div class="ck">${d?'✓':''}</div><div style="flex:1"><span>${q.t}</span><em>Premio: ${q.rw}</em>${d?'':`<div class="pb"><i style="width:${p*100}%"></i></div>`}</div></div>`}).join('')}
+function bar(){const el=document.getElementById('bar');el.innerHTML='';Object.entries(B).forEach(([k,b],i)=>{if(i===5){const s=document.createElement('div');s.className='sep';el.appendChild(s)}const u=unlocked(k);const bt=document.createElement('button');bt.className=(k===cur?'sel ':'')+(u?'':'lock');bt.innerHTML=`<span class="sw" style="background:${u?b.t:'#dbe5f1'}"></span>${u?b.n:'🔒'}`;bt.title=u?b.n:'Se desbloquea con una misión';bt.onclick=()=>{if(!u)return;cur=k;erase=false;document.getElementById('era').classList.remove('on');bar()};el.appendChild(bt)})}
+let pt;function pop(h){const p=document.getElementById('pop');p.innerHTML=h;p.classList.add('on');clearTimeout(pt);pt=setTimeout(()=>p.classList.remove('on'),2000)}
+document.getElementById('rot').onclick=()=>{rot=(rot+1)%4};
+document.getElementById('era').onclick=e=>{erase=!erase;e.currentTarget.classList.toggle('on',erase)};
+document.getElementById('night').onclick=()=>{night=!night;if(night)OS.achieve('voxel_night','Noche estrellada','Viste tu isla de noche')};
+addEventListener('keydown',e=>{if(e.key==='r')rot=(rot+1)%4;if(e.key==='e')document.getElementById('era').click()});
+bar();renderQ();checkQ();draw();
+</script>
+</body>
+</html>

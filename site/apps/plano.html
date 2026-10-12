@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="es" data-app="plano">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Plano</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Architects+Daughter&display=swap" rel="stylesheet">
+<style>
+:root{--bp:#0b3d91;--bp2:#0a3278;--line:#e8f0ff;--faint:rgba(232,240,255,.14);--red:#ff6b5a;--yel:#ffe27a}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bp2);color:var(--line);font-family:'Share Tech Mono',ui-monospace,monospace}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:18px;display:grid;grid-template-columns:1fr 260px;gap:16px}
+.sheet{position:relative;border:2px solid var(--line);background:var(--bp);box-shadow:0 0 0 6px var(--bp2),0 0 0 7px rgba(232,240,255,.4)}
+canvas{display:block;width:100%;aspect-ratio:4/3;touch-action:none;cursor:crosshair}
+.tb{border-top:2px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);font-size:11px;background:var(--bp)}
+.tb div{padding:4px 8px;border-right:1px solid var(--faint);border-bottom:1px solid var(--faint)}
+.tb b{display:block;font-size:14px;font-weight:400}
+aside{display:flex;flex-direction:column;gap:14px}
+h1{font-family:'Architects Daughter',cursive;font-size:52px;margin:0;line-height:.9;font-weight:400}
+h1 small{display:block;font-family:'Share Tech Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.2em;opacity:.7;margin-top:8px}
+.panel{border:1px solid rgba(232,240,255,.5);padding:12px}
+.panel h3{margin:0 0 8px;font-size:11px;letter-spacing:.2em;font-weight:400;opacity:.8}
+.ink{height:12px;border:1px solid var(--line);position:relative}.ink i{position:absolute;inset:0;right:auto;background:var(--line);transition:width .2s}
+.ink span{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--yel)}
+.row{display:flex;justify-content:space-between;font-size:13px;margin-top:6px}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btns button{font:inherit;font-size:13px;background:none;border:1px solid var(--line);color:var(--line);padding:10px 6px;cursor:pointer;letter-spacing:.06em}
+.btns button.pri{grid-column:1/-1;background:var(--line);color:var(--bp);font-size:15px}
+.btns button:hover{background:rgba(232,240,255,.12)}.btns button.pri:hover{background:#fff}
+button:focus-visible{outline:2px dashed var(--yel);outline-offset:3px}
+.lvls{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.lvls button{font:inherit;background:none;border:1px solid rgba(232,240,255,.5);color:var(--line);padding:8px 0;cursor:pointer;font-size:13px}
+.lvls button.on{background:var(--line);color:var(--bp)}
+.lvls button:disabled{opacity:.25;cursor:not-allowed}
+.lvls small{display:block;font-size:10px;color:var(--yel);height:12px}
+.note{font-family:'Architects Daughter','Comic Sans MS',cursive;font-size:17px;line-height:1.35;color:var(--yel)}
+.toast{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);background:var(--bp);border:2px solid var(--line);padding:18px 24px;text-align:center;font-family:'Architects Daughter','Comic Sans MS',cursive;font-size:26px;display:none}
+.toast.on{display:block}
+.toast .st{font-size:34px;color:var(--yel);letter-spacing:6px}
+.toast button{font-family:'Share Tech Mono',ui-monospace,monospace;font-size:14px;background:var(--line);color:var(--bp);border:0;padding:10px 16px;margin-top:10px;cursor:pointer}
+@media (max-width:900px){.wrap{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="sheet"><canvas id="c"></canvas>
+    <div class="tb"><div>PROYECTO<b>PLANO</b></div><div>LÁMINA<b id="tbL">01/08</b></div><div>ESCALA<b>1:50</b></div><div>FECHA<b id="tbD"></b></div></div>
+    <div class="toast" id="toast"><div id="tt">¡Obra aprobada!</div><div class="st" id="ts">★★★</div><button id="tn">Siguiente lámina →</button></div>
+  </div>
+  <aside>
+    <h1>Plano<small>INGENIERÍA DE CAÍDAS · v1.0</small></h1>
+    <div class="panel"><h3>ENCARGO</h3><div class="note" id="brief"></div></div>
+    <div class="panel"><h3>TINTA DISPONIBLE</h3><div class="ink"><i id="inkb"></i><span id="ink3" title="Límite para 3 estrellas"></span></div>
+      <div class="row"><span>Usada</span><span id="inkt">0%</span></div><div class="row"><span>En el recipiente</span><span id="cupN">0 / 5</span></div></div>
+    <div class="btns"><button class="pri" id="go">▶ SOLTAR BOLAS</button><button id="undo">↶ Deshacer</button><button id="clr">⌫ Borrar todo</button></div>
+    <div class="panel"><h3>LÁMINAS</h3><div class="lvls" id="lvls"></div></div>
+  </aside>
+</div>
+<script>
+const L=[
+ {e:[.2,.08],cup:[.75,.9],ink:.9,need:5,obs:[],nd:[],b:'Lleva al menos 5 bolas al recipiente. Dibuja una rampa con el ratón o el dedo.'},
+ {e:[.8,.08],cup:[.2,.9],ink:.9,need:5,obs:[[.35,.5,.65,.5]],nd:[],b:'Hay una viga en medio. Rodéala sin gastar demasiada tinta.'},
+ {e:[.55,.08],cup:[.12,.9],ink:1,need:5,obs:[[.3,.35,.3,1]],nd:[[0,0,.25,.6]],b:'El muro separa el recipiente. La zona roja está prohibida: no se puede dibujar allí.'},
+ {e:[.1,.08],cup:[.85,.55],ink:1.1,need:5,obs:[[.72,.6,.98,.6],[.72,.6,.72,1]],nd:[],b:'El recipiente está sobre una plataforma. Cuidado con la inercia.'},
+ {e:[.5,.05],cup:[.5,.9],ink:.8,need:6,obs:[[.38,.6,.62,.6]],nd:[[.33,.63,.34,.2]],b:'Una losa tapa el camino directo y debajo no puedes dibujar. Seis bolas esta vez.'},
+ {e:[.92,.05],cup:[.9,.9],ink:1.3,need:5,obs:[[.72,.22,.72,1],[.3,.5,.72,.5]],nd:[[.74,.3,.26,.4]],b:'El recipiente está justo debajo… pero tapado. Da la vuelta.'},
+ {e:[.08,.05],cup:[.9,.9],ink:1,need:6,obs:[[.2,.7,.5,.75],[.6,.4,.95,.45]],nd:[[.4,.78,.3,.22]],b:'Aprovecha las vigas existentes como parte de tu ruta.'},
+ {e:[.5,.05],cup:[.1,.9],ink:1.1,need:6,obs:[[.25,.55,.25,1]],nd:[[0,0,.3,.5]],b:'Obra maestra: haz que salten el muro. Necesitas velocidad.'},
+];
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');let W,H,D;const AR=.75;
+function rs(){const r=cv.getBoundingClientRect();D=Math.min(devicePixelRatio||1,2);W=cv.width=r.width*D;H=cv.height=r.width*AR*D}
+let lv=0,lines=[],cur=null,balls=[],running=false,emitted=0,inCup=0,best=OS.load('best',{}),unl=OS.load('unl',1),done=false,t=0;
+const R=.012,G=1.1;
+const X=x=>x*W,Y=y=>y*H;// y normalized 0..1 of height
+function inkUsed(){let s=0;for(const l of lines)for(let i=1;i<l.length;i++)s+=Math.hypot(l[i][0]-l[i-1][0],(l[i][1]-l[i-1][1])*AR);return s}
+function cupSegs(){const [cx,cy]=L[lv].cup,w=.13,h=.1;return[[cx-w/2,cy-h,cx-w/2,cy],[cx-w/2,cy,cx+w/2,cy],[cx+w/2,cy,cx+w/2,cy-h]]}
+function segs(){const s=[...L[lv].obs,...cupSegs()];for(const l of lines)for(let i=1;i<l.length;i++)s.push([l[i-1][0],l[i-1][1],l[i][0],l[i][1]]);return s}
+function inND(x,y){return L[lv].nd.some(([a,b,w,h])=>x>a&&x<a+w&&y>b&&y<b+h)}
+function toN(e){const r=cv.getBoundingClientRect();return[(e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height]}
+cv.addEventListener('pointerdown',e=>{if(done)return;const p=toN(e);if(inND(...p))return;cur=[p];lines.push(cur);cv.setPointerCapture(e.pointerId)});
+cv.addEventListener('pointermove',e=>{if(!cur)return;const p=toN(e);const last=cur[cur.length-1];const d=Math.hypot(p[0]-last[0],(p[1]-last[1])*AR);if(d<.012)return;if(inND(...p)){cur=null;return}const before=inkUsed();if(before+d>L[lv].ink){cur=null;flashInk();return}cur.push(p);ui()});
+addEventListener('pointerup',()=>{if(cur&&cur.length<2)lines.pop();cur=null;ui()});
+let fi=0;function flashInk(){fi=20}
+function ui(){const u=inkUsed()/L[lv].ink;document.getElementById('inkb').style.width=Math.min(100,(1-u)*100)+'%';document.getElementById('inkt').textContent=Math.round(u*100)+'%';document.getElementById('ink3').style.left=(50)+'%';document.getElementById('cupN').textContent=inCup+' / '+L[lv].need}
+function load(i){lv=i;lines=[];balls=[];running=false;emitted=0;inCup=0;done=false;document.getElementById('toast').classList.remove('on');document.getElementById('brief').textContent=L[i].b;document.getElementById('tbL').textContent=String(i+1).padStart(2,'0')+'/08';renderLv();ui()}
+function renderLv(){document.getElementById('lvls').innerHTML=L.map((_,i)=>`<button class="${i===lv?'on':''}" data-i="${i}" ${i>=unl?'disabled':''}>${String(i+1).padStart(2,'0')}<small>${best[i]?'★'.repeat(best[i]):''}</small></button>`).join('');document.querySelectorAll('#lvls button').forEach(b=>b.onclick=()=>load(+b.dataset.i))}
+document.getElementById('go').onclick=()=>{balls=[];emitted=0;inCup=0;running=true;ui()};
+document.getElementById('undo').onclick=()=>{lines.pop();ui()};document.getElementById('clr').onclick=()=>{lines=[];balls=[];running=false;ui()};
+document.getElementById('tn').onclick=()=>load(Math.min(L.length-1,lv+1));
+function step(dt){if(!running)return;t+=dt;if(emitted<8&&t>.35){t=0;emitted++;const [ex,ey]=L[lv].e;balls.push({x:ex+(Math.random()-.5)*.01,y:ey*AR,vx:0,vy:0})}
+ const S=segs().map(s=>[s[0],s[1]*AR,s[2],s[3]*AR]);const sub=6;
+ for(let k=0;k<sub;k++){const h=dt/sub;for(const b of balls){if(b.out)continue;b.vy+=G*h;b.x+=b.vx*h;b.y+=b.vy*h;
+  for(const s of S){const [x1,y1,x2,y2]=s;const dx=x2-x1,dy=y2-y1,l2=dx*dx+dy*dy||1e-9;let u=((b.x-x1)*dx+(b.y-y1)*dy)/l2;u=Math.max(0,Math.min(1,u));const px=x1+u*dx,py=y1+u*dy;const ddx=b.x-px,ddy=b.y-py,d=Math.hypot(ddx,ddy);
+   if(d<R&&d>1e-9){const nx=ddx/d,ny=ddy/d;b.x=px+nx*R;b.y=py+ny*R;const vn=b.vx*nx+b.vy*ny;if(vn<0){b.vx-=1.35*vn*nx;b.vy-=1.35*vn*ny;b.vx*=.995;b.vy*=.995}}}
+  if(b.x<R){b.x=R;b.vx=Math.abs(b.vx)*.5}if(b.x>1-R){b.x=1-R;b.vx=-Math.abs(b.vx)*.5}if(b.y>AR+.05)b.out=1}}
+ const [cx,cy]=L[lv].cup;inCup=balls.filter(b=>Math.abs(b.x-cx)<.065&&b.y<cy*AR&&b.y>(cy-.1)*AR).length;
+ if(emitted>=8&&balls.every(b=>b.out||Math.hypot(b.vx,b.vy)<.02||(Math.abs(b.x-cx)<.065&&b.y>(cy-.1)*AR))){running=false;check()}ui()}
+function check(){if(inCup>=L[lv].need){done=true;const u=inkUsed()/L[lv].ink;const st=u<=.5?3:u<=.8?2:1;best[lv]=Math.max(best[lv]||0,st);OS.save('best',best);if(lv+2>unl&&lv<L.length-1){unl=lv+2;OS.save('unl',unl)}
+ OS.xp(20+lv*8+st*8,'Lámina '+(lv+1)+' aprobada');if(st===3)OS.achieve('plano_3','Ingeniería eficiente','3 estrellas en una lámina de Plano');if(Object.keys(best).length===L.length)OS.achieve('plano_all','Colegiado','Aprobaste las 8 láminas de Plano');
+ document.getElementById('tt').textContent=inCup===8?'¡Pleno! Obra impecable.':'¡Obra aprobada!';document.getElementById('ts').textContent='★'.repeat(st)+'☆'.repeat(3-st);document.getElementById('tn').textContent=lv<L.length-1?'Siguiente lámina →':'Repasar láminas';document.getElementById('toast').classList.add('on');renderLv()}
+ else{document.getElementById('brief').textContent=`Solo ${inCup} de ${L[lv].need}. Ajusta tu rampa y vuelve a soltar.`}}
+function draw(){ctx.fillStyle='#0b3d91';ctx.fillRect(0,0,W,H);
+ // grid
+ for(let i=0;i<=40;i++){ctx.strokeStyle=i%5?'rgba(232,240,255,.07)':'rgba(232,240,255,.16)';ctx.lineWidth=D;ctx.beginPath();ctx.moveTo(i*W/40,0);ctx.lineTo(i*W/40,H);ctx.stroke()}for(let i=0;i<=30;i++){ctx.strokeStyle=i%5?'rgba(232,240,255,.07)':'rgba(232,240,255,.16)';ctx.beginPath();ctx.moveTo(0,i*H/30);ctx.lineTo(W,i*H/30);ctx.stroke()}
+ const lvD=L[lv];
+ // no-draw zones
+ for(const [a,b,w,h] of lvD.nd){ctx.save();ctx.beginPath();ctx.rect(X(a),Y(b),X(w),Y(h));ctx.clip();ctx.strokeStyle='rgba(255,107,90,.6)';ctx.lineWidth=1.5*D;for(let i=-H;i<W;i+=10*D){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i+H,H);ctx.stroke()}ctx.restore();ctx.strokeStyle='#ff6b5a';ctx.setLineDash([6*D,4*D]);ctx.strokeRect(X(a),Y(b),X(w),Y(h));ctx.setLineDash([])}
+ // obstacles (beams)
+ for(const s of lvD.obs){ctx.strokeStyle='#e8f0ff';ctx.lineWidth=7*D;ctx.lineCap='butt';ctx.beginPath();ctx.moveTo(X(s[0]),Y(s[1]));ctx.lineTo(X(s[2]),Y(s[3]));ctx.stroke();ctx.strokeStyle='#0b3d91';ctx.lineWidth=3*D;ctx.stroke()}
+ // cup
+ const cs=cupSegs();ctx.strokeStyle='#ffe27a';ctx.lineWidth=4*D;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(X(cs[0][0]),Y(cs[0][1]));for(const s of cs)ctx.lineTo(X(s[2]),Y(s[3]));ctx.stroke();
+ ctx.fillStyle='#ffe27a';ctx.font=`${14*D}px "Architects Daughter", cursive`;ctx.textAlign='center';ctx.fillText('recipiente ('+lvD.need+')',X(lvD.cup[0]),Y(lvD.cup[1])+18*D);
+ // dimension line under cup
+ ctx.strokeStyle='rgba(255,226,122,.6)';ctx.lineWidth=D;const cl=X(lvD.cup[0]-.065),cr=X(lvD.cup[0]+.065),cyy=Y(lvD.cup[1])+26*D;ctx.beginPath();ctx.moveTo(cl,cyy);ctx.lineTo(cr,cyy);ctx.moveTo(cl,cyy-4*D);ctx.lineTo(cl,cyy+4*D);ctx.moveTo(cr,cyy-4*D);ctx.lineTo(cr,cyy+4*D);ctx.stroke();
+ // emitter
+ const [ex,ey]=lvD.e;ctx.strokeStyle='#e8f0ff';ctx.lineWidth=2*D;ctx.beginPath();ctx.arc(X(ex),Y(ey),14*D,0,7);ctx.stroke();ctx.beginPath();ctx.moveTo(X(ex)-20*D,Y(ey));ctx.lineTo(X(ex)+20*D,Y(ey));ctx.moveTo(X(ex),Y(ey)-20*D);ctx.lineTo(X(ex),Y(ey)+20*D);ctx.stroke();ctx.fillStyle='#e8f0ff';ctx.font=`${14*D}px "Architects Daughter", cursive`;ctx.fillText('salida',X(ex),Y(ey)-24*D);
+ // player lines
+ ctx.strokeStyle=fi>0&&fi%4<2?'#ff6b5a':'#ffffff';if(fi>0)fi--;ctx.lineWidth=3.5*D;ctx.lineCap='round';ctx.lineJoin='round';for(const l of lines){ctx.beginPath();ctx.moveTo(X(l[0][0]),Y(l[0][1]));for(const p of l)ctx.lineTo(X(p[0]),Y(p[1]));ctx.stroke()}
+ // balls
+ for(const b of balls){if(b.out)continue;ctx.fillStyle='#ffe27a';ctx.beginPath();ctx.arc(X(b.x),b.y/AR*H,R*W,0,7);ctx.fill();ctx.strokeStyle='#0b3d91';ctx.lineWidth=1.5*D;ctx.stroke()}
+}
+let last=performance.now();function loop(n){const dt=Math.max(0,Math.min(.033,(n-last)/1000));last=n;step(dt);draw();requestAnimationFrame(loop)}
+document.getElementById('tbD').textContent=new Date().toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'2-digit'});
+addEventListener('resize',rs);rs();load(0);requestAnimationFrame(loop);
+</script>
+</body>
+</html>

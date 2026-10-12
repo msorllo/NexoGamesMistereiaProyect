@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="es" data-app="acuario">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Arrecife</title>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Mulish:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--aqua:#0a7fa8;--deep:#043a52;--sand:#e9d6a8;--coral:#ff5d8f;--pearl:#fff6e8;--glass:rgba(255,255,255,.82)}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:linear-gradient(#0b93bf,#043a52);color:var(--deep);font-family:'Mulish',system-ui,sans-serif;overflow:hidden}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.top{position:fixed;top:14px;left:16px;right:16px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;pointer-events:none;flex-wrap:wrap}
+.brand{background:var(--glass);border-radius:22px;padding:10px 16px;backdrop-filter:blur(8px);box-shadow:0 8px 24px rgba(4,58,82,.25)}
+h1{font-family:'Lilita One',system-ui,sans-serif;font-weight:400;font-size:clamp(28px,4vw,40px);margin:0;line-height:1;color:var(--deep)}
+h1 span{color:var(--coral)}
+.brand small{display:block;font-size:12px;font-weight:700;color:#3a7d94}
+.pearls{pointer-events:auto;background:var(--deep);color:var(--pearl);border-radius:999px;padding:8px 16px 8px 8px;display:flex;align-items:center;gap:8px;font-weight:800;font-size:18px;box-shadow:0 8px 20px rgba(4,58,82,.4)}
+.pearls i{width:28px;height:28px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#f3e3cf 55%,#cdb89d);display:block}
+.side{position:fixed;right:16px;top:86px;width:280px;max-width:calc(100% - 32px);max-height:calc(100% - 180px);overflow:auto;display:flex;flex-direction:column;gap:10px}
+.box{background:var(--glass);border-radius:20px;padding:12px 14px;backdrop-filter:blur(8px);box-shadow:0 8px 24px rgba(4,58,82,.2)}
+.box h3{font-family:'Lilita One';font-weight:400;font-size:18px;margin:0 0 8px;display:flex;justify-content:space-between;align-items:center}
+.box h3 small{font-family:'Mulish';font-size:11px;color:#3a7d94;font-weight:700}
+.tabs{display:flex;gap:4px;margin-bottom:8px}
+.tabs button{flex:1;border:0;border-radius:10px;padding:6px;font:inherit;font-weight:800;font-size:12px;background:#d8eef5;color:var(--deep);cursor:pointer}
+.tabs button.on{background:var(--deep);color:var(--pearl)}
+.shop{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.it{border:0;background:#fff;border-radius:14px;padding:8px 6px;font:inherit;font-size:12px;font-weight:800;color:var(--deep);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;box-shadow:inset 0 0 0 2px #d8eef5}
+.it .sw{width:30px;height:18px;border-radius:9px}
+.it .pr{font-size:11px;color:#b3743a}
+.it:disabled{opacity:.45;cursor:not-allowed}
+.it:focus-visible,.bb:focus-visible,.tabs button:focus-visible{outline:3px solid var(--coral);outline-offset:2px}
+.ms{display:flex;flex-direction:column;gap:6px;font-size:13px}
+.m{display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:center}
+.m .pb{grid-column:1/-1;height:6px;border-radius:4px;background:#d8eef5;overflow:hidden}.m .pb i{display:block;height:100%;background:var(--coral);border-radius:4px}
+.m.done{opacity:.55}.m.done span:first-child{text-decoration:line-through}
+.m em{font-style:normal;font-size:11px;color:#b3743a;font-weight:800}
+.bar{position:fixed;left:16px;bottom:16px;display:flex;gap:8px;flex-wrap:wrap;max-width:calc(100% - 32px)}
+.bb{border:0;border-radius:16px;padding:12px 16px;font:inherit;font-weight:800;font-size:14px;cursor:pointer;background:var(--glass);color:var(--deep);box-shadow:0 6px 16px rgba(4,58,82,.25);backdrop-filter:blur(8px)}
+.bb.on{background:var(--coral);color:#fff}
+.stat{position:fixed;left:16px;bottom:74px;background:var(--glass);border-radius:16px;padding:8px 12px;font-size:13px;font-weight:700;backdrop-filter:blur(8px);display:flex;gap:14px}
+.stat b{font-family:'Lilita One';font-weight:400;font-size:18px;display:block}
+.toast{position:fixed;left:50%;top:18px;transform:translateX(-50%);background:var(--deep);color:var(--pearl);padding:10px 18px;border-radius:999px;font-weight:800;opacity:0;transition:.3s;pointer-events:none;z-index:5}
+.toast.on{opacity:1;top:26px}
+.load{position:fixed;inset:0;display:grid;place-items:center;font-family:'Lilita One';font-size:24px;color:#fff}
+@media (max-width:720px){.side{top:auto;bottom:130px;max-height:34vh;right:16px;left:16px;width:auto}.stat{bottom:70px}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="load" id="load">Llenando el acuario…</div>
+<div class="top"><div class="brand"><h1>Arre<span>cife</span></h1><small>Tu acuario 3D · gira con el dedo o el ratón</small></div><div class="pearls" title="Perlas"><i></i><span id="pearls">0</span></div></div>
+<div class="side">
+  <div class="box"><h3>Tienda <small id="mode"></small></h3><div class="tabs"><button class="on" data-t="fish">Peces</button><button data-t="deco">Decoración</button></div><div class="shop" id="shop"></div></div>
+  <div class="box"><h3>Misiones <small id="msN"></small></h3><div class="ms" id="ms"></div></div>
+</div>
+<div class="stat"><div>Peces<b id="nf">0</b></div><div>Felicidad<b id="hp">0%</b></div><div>Cristal<b id="cl">100%</b></div></div>
+<div class="bar"><button class="bb on" id="bFeed">Dar de comer</button><button class="bb" id="bClean">Limpiar cristal</button><button class="bb" id="bLight">Luz nocturna</button></div>
+<div class="toast" id="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script>const GLB="__GLB__";</script>
+<script>
+function b64(s){const b=atob(s),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a.buffer}
+const FISH=[{id:'PezPayaso',n:'Payaso',p:10,c:'#ff7a1a',sp:1.1},{id:'PezNeon',n:'Neón',p:15,c:'#27e0ff',sp:1.6},{id:'PezCirujano',n:'Cirujano',p:25,c:'#2a5bff',sp:1.2},{id:'PezGlobo',n:'Globo',p:40,c:'#f2d27a',sp:.6},{id:'PezLuna',n:'Luna',p:60,c:'#c9c3ff',sp:.9}];
+const DECO=[{id:'Concha',n:'Concha',p:4,c:'#ffd6c9'},{id:'Alga',n:'Alga',p:5,c:'#2fbf71'},{id:'RocaMar',n:'Roca',p:6,c:'#4a5b6a'},{id:'Coral',n:'Coral',p:12,c:'#ff5d8f'},{id:'CoralCerebro',n:'Coral cerebro',p:12,c:'#b9e36a'},{id:'Cofre',n:'Cofre',p:30,c:'#ffcc33'},{id:'Castillo',n:'Castillo',p:45,c:'#3c78d8'}];
+const TW=8,TH=4.6,TD=4.4;
+let S=OS.load('s',null)||{pearls:25,fish:['PezPayaso','PezPayaso'],deco:[{n:'Alga',x:-2.6,z:-1.2,r:0},{n:'Coral',x:2.4,z:-1,r:1},{n:'RocaMar',x:.3,z:-1.5,r:.4},{n:'CoralCerebro',x:-1.2,z:.8,r:0}],fed:0,cleaned:0,dirt:.15,t:Date.now(),chest:0,ms:{}};
+const LIB={};let R,scene,camera,controls,clock=new THREE.Clock(),fishes=[],decos=[],pellets=[],bubbles,mode='feed',placing=null,night=false,grime,grimeCtx,grimeTex,sandTex,sandCtx;
+function get(n){return LIB[n].clone(true)}
+function save(){S.t=Date.now();OS.save('s',S)}
+function setup(){R=new THREE.WebGLRenderer({canvas:document.getElementById('c'),antialias:true,alpha:true});R.setPixelRatio(Math.min(devicePixelRatio,2));R.outputEncoding=THREE.sRGBEncoding;R.toneMapping=THREE.ACESFilmicToneMapping;R.shadowMap.enabled=true;
+ scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(42,1,.1,100);camera.position.set(0,2.6,10.5);controls=new THREE.OrbitControls(camera,R.domElement);controls.target.set(0,1.8,0);controls.enablePan=false;controls.minDistance=6;controls.maxDistance=14;controls.minPolarAngle=.9;controls.maxPolarAngle=1.75;controls.minAzimuthAngle=-1.1;controls.maxAzimuthAngle=1.1;controls.enableDamping=true;
+ scene.userData.hemi=new THREE.HemisphereLight('#bff3ff','#0a4d63',.8);scene.add(scene.userData.hemi);const sun=new THREE.DirectionalLight('#fffaf0',1.3);sun.position.set(2,10,3);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);Object.assign(sun.shadow.camera,{left:-5,right:5,top:5,bottom:-5});scene.add(sun);scene.userData.sun=sun;
+ scene.userData.glow=new THREE.PointLight('#7a5cff',0,10);scene.userData.glow.position.set(0,2,0);scene.add(scene.userData.glow);
+ // mesa + tanque
+ const table=new THREE.Mesh(new THREE.BoxGeometry(TW+1.2,.5,TD+1.2),new THREE.MeshStandardMaterial({color:'#5a3a22',roughness:.6}));table.position.y=-.3;table.receiveShadow=true;scene.add(table);
+ sandCtx=(()=>{const c=document.createElement('canvas');c.width=c.height=256;return c.getContext('2d')})();sandTex=new THREE.CanvasTexture(sandCtx.canvas);sandTex.encoding=THREE.sRGBEncoding;
+ const sand=new THREE.Mesh(new THREE.PlaneGeometry(TW,TD,40,20),new THREE.MeshStandardMaterial({map:sandTex,roughness:.95}));sand.rotation.x=-Math.PI/2;sand.position.y=.02;const sp=sand.geometry.attributes.position;for(let i=0;i<sp.count;i++)sp.setZ(i,Math.sin(sp.getX(i)*1.3)*.05+Math.cos(sp.getY(i)*2)*.04+.04);sand.geometry.computeVertexNormals();sand.receiveShadow=true;sand.name='sand';scene.add(sand);scene.userData.sand=sand;
+ const back=new THREE.Mesh(new THREE.PlaneGeometry(TW,TH),new THREE.MeshBasicMaterial({color:'#0f6f94'}));back.position.set(0,TH/2,-TD/2+.01);scene.add(back);
+ const water=new THREE.Mesh(new THREE.BoxGeometry(TW,TH-.3,TD),new THREE.MeshPhysicalMaterial({color:'#3ec5e8',transparent:true,opacity:.14,roughness:.1,depthWrite:false,side:THREE.BackSide}));water.position.y=(TH-.3)/2;scene.add(water);
+ const surf=new THREE.Mesh(new THREE.PlaneGeometry(TW,TD,30,16),new THREE.MeshStandardMaterial({color:'#bff3ff',transparent:true,opacity:.35,roughness:.1,side:THREE.DoubleSide,depthWrite:false}));surf.rotation.x=-Math.PI/2;surf.position.y=TH-.3;surf.name='surface';scene.add(surf);scene.userData.surf=surf;
+ const frameMat=new THREE.MeshStandardMaterial({color:'#1b2a33',roughness:.4,metalness:.6});[[0,0],[0,TH]].forEach(([_,y])=>{[[0,TD/2],[0,-TD/2]].forEach(([x,z])=>{const b=new THREE.Mesh(new THREE.BoxGeometry(TW+.1,.1,.1),frameMat);b.position.set(0,y,z);scene.add(b)});[[TW/2],[-TW/2]].forEach(([x])=>{const b=new THREE.Mesh(new THREE.BoxGeometry(.1,.1,TD+.1),frameMat);b.position.set(x,y,0);scene.add(b)})});
+ [[TW/2,TD/2],[-TW/2,TD/2],[TW/2,-TD/2],[-TW/2,-TD/2]].forEach(([x,z])=>{const b=new THREE.Mesh(new THREE.BoxGeometry(.1,TH,.1),frameMat);b.position.set(x,TH/2,z);scene.add(b)});
+ const lid=new THREE.Mesh(new THREE.BoxGeometry(TW+.2,.12,TD+.2),frameMat);lid.position.y=TH+.06;scene.add(lid);const lamp=new THREE.Mesh(new THREE.BoxGeometry(TW*.8,.04,.3),new THREE.MeshBasicMaterial({color:'#f2fdff'}));lamp.position.set(0,TH-.01,0);scene.add(lamp);
+ // cristal frontal con suciedad borrable
+ const gc=document.createElement('canvas');gc.width=512;gc.height=300;grimeCtx=gc.getContext('2d');grimeTex=new THREE.CanvasTexture(gc);paintGrime(S.dirt);
+ grime=new THREE.Mesh(new THREE.PlaneGeometry(TW,TH),new THREE.MeshBasicMaterial({map:grimeTex,transparent:true,depthWrite:false}));grime.position.set(0,TH/2,TD/2+.02);grime.name='glass';scene.add(grime);
+ // rayos de luz
+ for(let i=0;i<5;i++){const g=new THREE.PlaneGeometry(.6,TH*1.1);const m=new THREE.MeshBasicMaterial({color:'#e8fdff',transparent:true,opacity:.07,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide});const p=new THREE.Mesh(g,m);p.position.set(-3+i*1.5,TH/2,-.4+i*.2);p.rotation.set(0,.3,.18);p.userData.ray=i;scene.add(p)}
+ // burbujas
+ const N=90;const bg=new THREE.BufferGeometry();const bp=new Float32Array(N*3);for(let i=0;i<N;i++){bp[i*3]=3.2+Math.random()*.2;bp[i*3+1]=Math.random()*TH;bp[i*3+2]=-1.5+Math.random()*.2}bg.setAttribute('position',new THREE.BufferAttribute(bp,3));bubbles=new THREE.Points(bg,new THREE.PointsMaterial({color:'#ffffff',size:.07,transparent:true,opacity:.8}));scene.add(bubbles);
+ const stone=new THREE.Mesh(new THREE.CylinderGeometry(.12,.15,.12,12),new THREE.MeshStandardMaterial({color:'#8aa0ab'}));stone.position.set(3.3,.1,-1.4);scene.add(stone);
+ addEventListener('resize',resize);resize();let down=null;R.domElement.addEventListener('pointerdown',e=>{down=[e.clientX,e.clientY];if(mode==='clean'){controls.enabled=false;wipe(e)}});R.domElement.addEventListener('pointermove',e=>{if(mode==='clean'&&down)wipe(e)});addEventListener('pointerup',e=>{if(down&&mode!=='clean'&&Math.hypot(e.clientX-down[0],e.clientY-down[1])<6)click(e);down=null;controls.enabled=true;if(mode==='clean')checkClean()})}
+function resize(){R.setSize(innerWidth,innerHeight,false);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();camera.position.z=innerWidth<720?14:10.5}
+function paintGrime(level){const g=grimeCtx;g.clearRect(0,0,512,300);if(level<=0.01){grimeTex.needsUpdate=true;return}let s=17;const r=()=>(s=(s*16807)%2147483647)/2147483647;for(let i=0;i<260;i++){const x=r()*512,y=r()*300,rr=10+r()*38;const gr=g.createRadialGradient(x,y,0,x,y,rr);gr.addColorStop(0,`rgba(${70+r()*30|0},${110+r()*30|0},${60},${level*.55})`);gr.addColorStop(1,'rgba(70,110,60,0)');g.fillStyle=gr;g.beginPath();g.arc(x,y,rr,0,7);g.fill()}grimeTex.needsUpdate=true}
+function dirtAmount(){const d=grimeCtx.getImageData(0,0,512,300).data;let a=0;for(let i=3;i<d.length;i+=64)a+=d[i];return a/(d.length/64)/255}
+const ray=new THREE.Raycaster(),mv=new THREE.Vector2();
+function pick(e,objs){mv.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);ray.setFromCamera(mv,camera);return ray.intersectObjects(objs,true)[0]}
+function wipe(e){const h=pick(e,[grime]);if(!h)return;const g=grimeCtx;g.save();g.globalCompositeOperation='destination-out';const x=h.uv.x*512,y=(1-h.uv.y)*300;const gr=g.createRadialGradient(x,y,0,x,y,40);gr.addColorStop(0,'rgba(0,0,0,1)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.beginPath();g.arc(x,y,40,0,7);g.fill();g.restore();grimeTex.needsUpdate=true;if(Math.random()<.3)squeak()}
+function checkClean(){const d=dirtAmount();S.dirt=Math.min(S.dirt,d*1.6);if(d<.02&&S.dirt>-1){S.cleaned++;S.dirt=0;earn(8,'¡Cristal reluciente!');OS.xp(10,'Cristal del acuario limpio');checkMs();setMode('feed')}ui();save()}
+function click(e){if(placing){const h=pick(e,[scene.userData.sand]);if(!h)return;const d={n:placing,x:Math.max(-TW/2+.5,Math.min(TW/2-.5,h.point.x)),z:Math.max(-TD/2+.5,Math.min(TD/2-.5,h.point.z)),r:Math.random()*6};S.deco.push(d);spawnDeco(d,true);placing=null;setMode('feed');checkMs();save();return}
+ const ch=pick(e,decos.filter(o=>o.userData.n==='Cofre'));if(ch){if(Date.now()-S.chest>180000){S.chest=Date.now();earn(15,'¡El cofre suelta perlas!');burst(ch.object.getWorldPosition(new THREE.Vector3()));save()}else toast('El cofre se recarga en '+Math.ceil((180000-(Date.now()-S.chest))/60000)+' min');return}
+ if(mode==='feed'){const h=pick(e,[scene.userData.surf,scene.userData.sand,grime]);if(!h)return;let p=h.point.clone();p.y=TH-.35;p.x=Math.max(-TW/2+.3,Math.min(TW/2-.3,p.x));p.z=Math.max(-TD/2+.3,Math.min(TD/2-.3,h.object===grime?0:p.z));for(let i=0;i<4;i++){const m=new THREE.Mesh(new THREE.SphereGeometry(.045,8,6),new THREE.MeshStandardMaterial({color:'#c46a2a'}));m.position.copy(p).add(new THREE.Vector3((Math.random()-.5)*.4,0,(Math.random()-.5)*.4));scene.add(m);pellets.push(m)}plop();S.fed++;checkMs();save()}}
+function burst(p){for(let i=0;i<14;i++){const m=new THREE.Mesh(new THREE.SphereGeometry(.07,10,8),new THREE.MeshStandardMaterial({color:'#fff6e8',roughness:.2,metalness:.3}));m.position.copy(p);m.userData.v=new THREE.Vector3((Math.random()-.5)*1.5,1.5+Math.random(),(Math.random()-.5)*1.5);m.userData.life=1.4;scene.add(m);pellets.push(m)}}
+function spawnFish(id){const f=FISH.find(x=>x.id===id);const g=new THREE.Group();const m=get(id);m.rotation.y=-Math.PI/2;m.scale.setScalar(id==='PezGlobo'?1.1:1);g.add(m);g.position.set((Math.random()-.5)*(TW-2),1+Math.random()*(TH-2),(Math.random()-.5)*(TD-1.5));g.userData={id,sp:f.sp,vel:new THREE.Vector3(Math.random()-.5,0,Math.random()-.5).normalize().multiplyScalar(f.sp*.5),tgt:null,ph:Math.random()*6,m,hunger:.5};scene.add(g);fishes.push(g)}
+function spawnDeco(d,fresh){const o=get(d.n);o.position.set(d.x,.03,d.z);o.rotation.y=d.r;o.userData.n=d.n;o.scale.setScalar({Alga:1.3+Math.random()*.5,Coral:1.7,Cofre:1.3,Castillo:1.3,Concha:1.4}[d.n]||1);o.userData.base=o.scale.x;scene.add(o);decos.push(o);if(fresh){o.scale.multiplyScalar(.01);o.userData.grow=1}}
+function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),1800)}
+function earn(n,why){S.pearls+=n;toast(`+${n} perlas · ${why}`);chime();ui()}
+let ac;function tone(f,d,type='sine',v=.05){try{ac=ac||new AudioContext();const o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d);o.connect(g).connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}}
+function plop(){tone(420,.15);setTimeout(()=>tone(620,.12),60)}function chime(){[880,1175,1568].forEach((f,i)=>setTimeout(()=>tone(f,.4),i*80))}function squeak(){tone(1600+Math.random()*600,.04,'sine',.015)}
+const MS=[{id:'f5',t:'Ten 5 peces',g:5,v:()=>S.fish.length,rw:15},{id:'sp3',t:'3 especies distintas',g:3,v:()=>new Set(S.fish).size,rw:20},{id:'d8',t:'8 decoraciones',g:8,v:()=>S.deco.length,rw:20},{id:'fd15',t:'Da de comer 15 veces',g:15,v:()=>S.fed,rw:15},{id:'cl',t:'Limpia el cristal',g:1,v:()=>S.cleaned,rw:10},{id:'all',t:'Las 5 especies',g:5,v:()=>new Set(S.fish).size,rw:60}];
+function checkMs(){MS.forEach(m=>{if(!S.ms[m.id]&&m.v()>=m.g){S.ms[m.id]=1;earn(m.rw,'Misión: '+m.t);OS.xp(20+m.rw,'Arrecife: '+m.t)}});if(Object.keys(S.ms).length===MS.length)OS.achieve('acu_all','Biólogo marino','Completaste todas las misiones del Arrecife');if(new Set(S.fish).size===5)OS.achieve('acu_5sp','Arrecife completo','Tienes las 5 especies');ui()}
+let tab='fish';function renderShop(){const L=tab==='fish'?FISH:DECO;document.getElementById('shop').innerHTML=L.map(x=>`<button class="it" data-id="${x.id}" ${S.pearls<x.p?'disabled':''}><span class="sw" style="background:${x.c}"></span>${x.n}<span class="pr">${x.p} perlas</span></button>`).join('');
+ document.querySelectorAll('.it').forEach(b=>b.onclick=()=>{const x=L.find(y=>y.id===b.dataset.id);if(S.pearls<x.p)return;S.pearls-=x.p;if(tab==='fish'){S.fish.push(x.id);spawnFish(x.id);toast('¡Bienvenido, pez '+x.n.toLowerCase()+'!');OS.xp(8,'Nuevo pez: '+x.n);plop()}else{placing=x.id;setMode('place')}checkMs();save();ui()})}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));renderShop()});
+function setMode(m){mode=m;document.getElementById('bFeed').classList.toggle('on',m==='feed');document.getElementById('bClean').classList.toggle('on',m==='clean');document.getElementById('mode').textContent=m==='place'?'Toca la arena para colocar':m==='clean'?'Frota el cristal':'';R.domElement.style.cursor=m==='clean'?'grab':m==='place'?'copy':'pointer'}
+document.getElementById('bFeed').onclick=()=>setMode('feed');document.getElementById('bClean').onclick=()=>setMode(mode==='clean'?'feed':'clean');
+document.getElementById('bLight').onclick=e=>{night=!night;e.currentTarget.classList.toggle('on',night);e.currentTarget.textContent=night?'Luz de día':'Luz nocturna';if(night)OS.achieve('acu_night','Bioluminiscencia','Encendiste la luz nocturna del acuario')};
+function ui(){document.getElementById('pearls').textContent=S.pearls;document.getElementById('nf').textContent=S.fish.length;const hp=fishes.length?Math.round(fishes.reduce((a,f)=>a+(1-f.userData.hunger),0)/fishes.length*100):0;document.getElementById('hp').textContent=hp+'%';document.getElementById('cl').textContent=Math.round((1-Math.min(1,S.dirt))*100)+'%';
+ document.getElementById('msN').textContent=Object.keys(S.ms).length+'/'+MS.length;document.getElementById('ms').innerHTML=MS.map(m=>{const v=Math.min(m.g,m.v());return`<div class="m ${S.ms[m.id]?'done':''}"><span>${m.t}</span><em>+${m.rw}</em><div class="pb"><i style="width:${v/m.g*100}%"></i></div></div>`}).join('');renderShop()}
+function caustics(t){const g=sandCtx;g.fillStyle='#d9c08a';g.fillRect(0,0,256,256);g.globalCompositeOperation='lighter';for(let i=0;i<26;i++){const x=(Math.sin(i*12.9+t*.4)*.5+.5)*256,y=(Math.cos(i*7.3+t*.33)*.5+.5)*256,r=30+Math.sin(t+i)*10;const gr=g.createRadialGradient(x,y,r*.55,x,y,r);gr.addColorStop(0,'rgba(255,255,255,0)');gr.addColorStop(.7,'rgba(255,255,240,.12)');gr.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=gr;g.beginPath();g.arc(x,y,r,0,7);g.fill()}g.globalCompositeOperation='source-over';for(let i=0;i<120;i++){g.fillStyle=`rgba(150,120,80,.25)`;g.fillRect((i*97)%256,(i*57)%256,2,2)}sandTex.needsUpdate=true}
+let acc=0,inc=0;
+function loop(){requestAnimationFrame(loop);const dt=Math.min(.05,clock.getDelta()),t=clock.elapsedTime;acc+=dt;inc+=dt;
+ if(acc>.12){acc=0;caustics(t)}
+ const B={x:TW/2-.6,y0:.5,y1:TH-.6,z:TD/2-.6};
+ fishes.forEach(f=>{const u=f.userData;u.hunger=Math.min(1,u.hunger+dt*.004);let tgt=u.tgt;const food=pellets.filter(p=>!p.userData.v&&p.position.y>.1);if(food.length){let best=null,bd=1e9;food.forEach(p=>{const d=p.position.distanceTo(f.position);if(d<bd){bd=d;best=p}});tgt=best.position;if(bd<.25){scene.remove(best);pellets.splice(pellets.indexOf(best),1);u.hunger=Math.max(0,u.hunger-.35);if(Math.random()<.5)earn(1,'Pez contento');tone(700,.05)}}
+  else if(!tgt||f.position.distanceTo(tgt)<.4||Math.random()<.003){u.tgt=new THREE.Vector3((Math.random()*2-1)*B.x,B.y0+Math.random()*(B.y1-B.y0),(Math.random()*2-1)*B.z);tgt=u.tgt}
+  const want=tgt.clone().sub(f.position).normalize().multiplyScalar(u.sp*(food.length?1.6:1));u.vel.lerp(want,dt*1.4);f.position.addScaledVector(u.vel,dt);f.position.x=Math.max(-B.x,Math.min(B.x,f.position.x));f.position.y=Math.max(B.y0,Math.min(B.y1,f.position.y));f.position.z=Math.max(-B.z,Math.min(B.z,f.position.z));
+  if(u.vel.lengthSq()>.001){const look=f.position.clone().add(u.vel);const q=f.quaternion.clone();f.lookAt(look);f.quaternion.slerp(q,.85)}u.m.rotation.y=-Math.PI/2+Math.sin(t*8*u.sp+u.ph)*.18});
+ pellets.forEach(p=>{if(p.userData.v){p.position.addScaledVector(p.userData.v,dt);p.userData.v.y-=3*dt;p.userData.life-=dt;if(p.userData.life<0){scene.remove(p);p.dead=1}}else if(p.position.y>.12)p.position.y-=dt*.35});pellets=pellets.filter(p=>!p.dead);
+ decos.forEach(o=>{if(o.userData.grow){const s=o.scale.x+dt*2;o.scale.setScalar(Math.min(o.userData.base,s));if(s>=o.userData.base)o.userData.grow=0}if(o.userData.n==='Alga')o.rotation.z=Math.sin(t*1.2+o.position.x)*.08});
+ const bp=bubbles.geometry.attributes.position;for(let i=0;i<bp.count;i++){let y=bp.getY(i)+dt*(.8+(i%5)*.15);if(y>TH-.3)y=.15;bp.setY(i,y);bp.setX(i,3.3+Math.sin(y*3+i)*.08)}bp.needsUpdate=true;
+ const sp=scene.userData.surf.geometry.attributes.position;for(let i=0;i<sp.count;i++)sp.setZ(i,Math.sin(sp.getX(i)*2+t*1.5)*.03+Math.cos(sp.getY(i)*2.5+t)*.03);sp.needsUpdate=true;
+ scene.children.forEach(o=>{if(o.userData.ray!=null)o.material.opacity=.05+Math.sin(t*.8+o.userData.ray)*.03});
+ const k=night?.15:1;scene.userData.hemi.intensity=.8*k;scene.userData.sun.intensity=1.3*k;scene.userData.glow.intensity=night?3:0;R.setClearColor(night?'#06202c':'#0b93bf',0);
+ if(inc>10){inc=0;const happy=fishes.filter(f=>f.userData.hunger<.6).length;if(happy){S.pearls+=happy;ui();save()}S.dirt=Math.min(1,S.dirt+.01);if(Math.random()<.3)paintGrime(Math.max(dirtAmount()*1.6,S.dirt))}
+ controls.update();R.render(scene,camera)}
+setup();new THREE.GLTFLoader().parse(b64(GLB),'',g=>{g.scene.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});[...g.scene.children].forEach(c=>LIB[c.name]=c);document.getElementById('load').remove();
+ const away=Math.min(12,(Date.now()-S.t)/36e5);S.dirt=Math.min(1,S.dirt+away*.05);paintGrime(S.dirt);
+ S.fish.forEach(spawnFish);S.deco.forEach(d=>spawnDeco(d));if(away>.5){const g=Math.round(away*S.fish.length*2);if(g>0){S.pearls+=g;setTimeout(()=>toast(`Mientras no estabas, tus peces reunieron ${g} perlas`),800)}}ui();setMode('feed');loop();save()},()=>document.getElementById('load').textContent='No se pudieron cargar los modelos 3D.');
+</script>
+</body>
+</html>

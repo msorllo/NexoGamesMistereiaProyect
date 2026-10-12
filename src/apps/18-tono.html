@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="es" data-app="tono">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tono</title>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f7f7f2;--ink:#222226;--mut:#8d8d93;--line:#e4e4dd}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:'Lexend',system-ui,sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:22px;display:grid;grid-template-columns:260px 1fr;gap:28px;align-items:start}
+.side h1{font-weight:800;font-size:72px;margin:0;line-height:.85;letter-spacing:-.05em}
+.side h1 span{display:inline-block;background:linear-gradient(90deg,#ff5f6d,#ffc371,#47e5bc,#4776e6,#8e54e9);-webkit-background-clip:text;background-clip:text;color:transparent;background-size:200% 100%;animation:sl 8s linear infinite}
+@keyframes sl{to{background-position:200% 0}}
+.side p{color:var(--mut);font-weight:300;line-height:1.5;font-size:15px}
+.meta{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:18px 0}
+.meta div{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.1em}
+.meta b{display:block;font-size:30px;color:var(--ink);font-weight:600;letter-spacing:-.02em;text-transform:none;font-variant-numeric:tabular-nums}
+.lvls{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.lv{aspect-ratio:1;border:0;border-radius:10px;cursor:pointer;position:relative;font:inherit;font-weight:600;font-size:13px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.3)}
+.lv.lock{filter:grayscale(1) opacity(.35);cursor:not-allowed}
+.lv.cur{outline:3px solid var(--ink);outline-offset:2px}
+.lv small{position:absolute;bottom:3px;left:0;right:0;font-size:9px;letter-spacing:1px}
+.lv:focus-visible,.btn:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.btn{font:inherit;font-weight:600;border:0;background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:12px;cursor:pointer;margin-top:14px;width:100%}
+.btn.ghost{background:none;color:var(--ink);border:1.5px solid var(--line)}
+.stage{display:flex;flex-direction:column;align-items:center;gap:14px}
+.board{position:relative;touch-action:none;user-select:none}
+.tile{position:absolute;border-radius:6px;cursor:grab;transition:transform .28s cubic-bezier(.5,1.6,.4,1),box-shadow .2s;will-change:transform}
+.tile.fixed{cursor:default}
+.tile.fixed::after{content:'';position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px;border-radius:50%;background:rgba(0,0,0,.35)}
+.tile.sel{z-index:3;box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--ink),0 10px 20px rgba(0,0,0,.25)}
+.tile.drag{transition:none;z-index:5;box-shadow:0 14px 30px rgba(0,0,0,.3);cursor:grabbing}
+.board.win .tile{animation:wv .6s ease both}
+@keyframes wv{50%{transform:var(--t) scale(.82)}}
+.status{font-size:15px;color:var(--mut);min-height:22px;text-align:center}
+.status b{color:var(--ink)}
+.stars{font-size:28px;letter-spacing:6px}
+@media (max-width:820px){.wrap{grid-template-columns:1fr}.side h1{font-size:56px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="side">
+    <h1><span>Tono</span></h1>
+    <p>Reordena las fichas para recomponer el degradado. Las fichas con punto están fijas: úsalas de brújula. Intercambia dos fichas tocándolas o arrastrándolas.</p>
+    <div class="meta"><div>Movimientos<b id="mv">0</b></div><div>Objetivo ★★★<b id="par">0</b></div></div>
+    <div class="lvls" id="lvls"></div>
+    <button class="btn" id="peek">Ver solución 2 s</button>
+    <button class="btn ghost" id="reset">Barajar de nuevo</button>
+  </div>
+  <div class="stage"><div class="board" id="board"></div><div class="status" id="status"></div></div>
+</div>
+<script>
+const LV=[
+ {c:4,r:5,k:['#ff5f6d','#ffc371','#4776e6','#47e5bc']},{c:5,r:6,k:['#f9d423','#ff4e50','#00c9ff','#92fe9d']},{c:5,r:7,k:['#fbd3e9','#bb377d','#1fa2ff','#a6ffcb']},
+ {c:6,r:7,k:['#ff9a8b','#ff6a88','#2b5876','#4e4376'],fx:'edges'},{c:6,r:8,k:['#e0c3fc','#8ec5fc','#f6d365','#fda085'],fx:'edges'},{c:7,r:8,k:['#43e97b','#38f9d7','#fa709a','#fee140'],fx:'sparse'},
+ {c:7,r:9,k:['#30cfd0','#330867','#ffecd2','#fcb69f'],fx:'sparse'},{c:8,r:9,k:['#f83600','#f9d423','#0f2027','#2c5364'],fx:'corners'},{c:8,r:10,k:['#c471f5','#fa71cd','#12c2e9','#f5f7fa'],fx:'corners'},
+ {c:9,r:10,k:['#ff0844','#ffb199','#0ba360','#3cba92'],fx:'corners'},{c:9,r:11,k:['#b224ef','#7579ff','#f6d242','#ff52e5'],fx:'corners'},{c:10,r:12,k:['#fdfbfb','#434343','#ff512f','#1e90ff'],fx:'corners'}];
+let lv=0,tiles=[],pos=[],moves=0,sel=null,done=OS.load('done',{}),unl=OS.load('unl',1),won=false,T,cw,ch;
+const hex=h=>{const n=parseInt(h.slice(1),16);return[n>>16,n>>8&255,n&255]};
+function col(x,y,L){const [a,b,c,d]=L.k.map(hex);const u=x/(L.c-1),v=y/(L.r-1);return'rgb('+[0,1,2].map(i=>Math.round((a[i]*(1-u)+b[i]*u)*(1-v)+(c[i]*(1-u)+d[i]*u)*v)).join(',')+')'}
+function fixed(x,y,L){const e=x===0||y===0||x===L.c-1||y===L.r-1;const corner=(x===0||x===L.c-1)&&(y===0||y===L.r-1);if(!L.fx)return e;if(L.fx==='edges')return corner||((x===0||x===L.c-1)&&y%2===0)||((y===0||y===L.r-1)&&x%2===0);if(L.fx==='sparse')return corner||(e&&(x+y)%3===0);return corner}
+function size(){const L=LV[lv];const maxW=Math.min(innerWidth-32,innerWidth>820?innerWidth-360:innerWidth-32,640),maxH=innerWidth>820?innerHeight-110:innerHeight*.7;const g=4;const s=Math.floor(Math.min((maxW-g*(L.c-1))/L.c,(maxH-g*(L.r-1))/L.r));cw=ch=s;T=s+g;const b=document.getElementById('board');b.style.width=(T*L.c-g)+'px';b.style.height=(T*L.r-g)+'px'}
+function build(shuffle=true){const L=LV[lv];won=false;moves=0;sel=null;size();const b=document.getElementById('board');b.classList.remove('win');b.innerHTML='';tiles=[];
+ for(let y=0;y<L.r;y++)for(let x=0;x<L.c;x++){const el=document.createElement('div');el.className='tile'+(fixed(x,y,L)?' fixed':'');el.style.background=col(x,y,L);el.style.width=cw+'px';el.style.height=ch+'px';b.appendChild(el);tiles.push({el,home:y*L.c+x,fixed:fixed(x,y,L)})}
+ pos=tiles.map((_,i)=>i);if(shuffle){const free=tiles.map((t,i)=>t.fixed?-1:i).filter(i=>i>=0);const perm=[...free].sort(()=>Math.random()-.5);free.forEach((slot,k)=>pos[slot]=perm[k])}
+ // pos[slot]=tileIndex
+ place(true);tiles.forEach((t,i)=>{t.el.addEventListener('pointerdown',e=>down(e,i))});ui();document.getElementById('status').innerHTML=`Nivel ${lv+1} · ${L.c}×${L.r} fichas`}
+function slotOf(ti){return pos.indexOf(ti)}
+function place(instant){const L=LV[lv];pos.forEach((ti,slot)=>{const x=slot%L.c,y=Math.floor(slot/L.c);const t=tiles[ti];if(instant)t.el.style.transition='none';const tr=`translate(${x*T}px,${y*T}px)`;t.el.style.transform=tr;t.el.style.setProperty('--t',tr);t.el.style.animationDelay=((x+y)*30)+'ms';if(instant){void t.el.offsetWidth;t.el.style.transition=''}})}
+let drag=null;
+function down(e,ti){if(won||tiles[ti].fixed)return;e.preventDefault();const r=document.getElementById('board').getBoundingClientRect();drag={ti,sx:e.clientX,sy:e.clientY,moved:false,r};tiles[ti].el.setPointerCapture(e.pointerId);
+ tiles[ti].el.onpointermove=ev=>{const dx=ev.clientX-drag.sx,dy=ev.clientY-drag.sy;if(!drag.moved&&Math.hypot(dx,dy)<6)return;drag.moved=true;const L=LV[lv];const s=slotOf(ti);tiles[ti].el.classList.add('drag');tiles[ti].el.style.transform=`translate(${(s%L.c)*T+dx}px,${Math.floor(s/L.c)*T+dy}px)`};
+ tiles[ti].el.onpointerup=ev=>{const el=tiles[ti].el;el.onpointermove=el.onpointerup=null;el.classList.remove('drag');if(drag.moved){const L=LV[lv];const x=Math.floor((ev.clientX-drag.r.left)/T),y=Math.floor((ev.clientY-drag.r.top)/T);if(x>=0&&y>=0&&x<L.c&&y<L.r){const tgt=pos[y*L.c+x];if(tgt!==ti&&!tiles[tgt].fixed){swap(ti,tgt);drag=null;return}}place();drag=null;return}
+  drag=null;if(sel===null){sel=ti;el.classList.add('sel')}else if(sel===ti){el.classList.remove('sel');sel=null}else{tiles[sel].el.classList.remove('sel');const a=sel;sel=null;swap(a,ti)}}}
+function swap(a,b){const sa=slotOf(a),sb=slotOf(b);pos[sa]=b;pos[sb]=a;moves++;place();tick(pos[sa]===sa&&pos[sb]===sb?2:(pos[sa]===sa||pos[sb]===sb)?1:0);ui();if(pos.every((ti,s)=>ti===s))win()}
+function par(){const L=LV[lv];return Math.round(tiles.filter(t=>!t.fixed).length*.72)}
+function ui(){document.getElementById('mv').textContent=moves;document.getElementById('par').textContent='≤ '+par();
+ document.getElementById('lvls').innerHTML=LV.map((L,i)=>`<button class="lv ${i>=unl?'lock':''} ${i===lv?'cur':''}" data-i="${i}" style="background:linear-gradient(135deg,${L.k[0]},${L.k[1]},${L.k[3]},${L.k[2]})" ${i>=unl?'disabled':''}>${i+1}<small>${done[i]?'★'.repeat(done[i]):''}</small></button>`).join('');
+ document.querySelectorAll('.lv').forEach(b=>b.onclick=()=>{lv=+b.dataset.i;build()})}
+function win(){won=true;const st=moves<=par()?3:moves<=par()*1.5?2:1;done[lv]=Math.max(done[lv]||0,st);OS.save('done',done);if(lv+2>unl&&lv<LV.length-1){unl=lv+2;OS.save('unl',unl)}
+ document.getElementById('board').classList.add('win');[523,659,784,1046,1318].forEach((f,i)=>setTimeout(()=>tone(f,.3),i*80));
+ OS.xp(15+lv*6+st*5,'Degradado '+(lv+1)+' restaurado');if(st===3)OS.achieve('tono_3','Ojo de pintor','3 estrellas en Tono');if(lv===LV.length-1)OS.achieve('tono_all','Maestro del color','Completaste el último nivel de Tono');
+ document.getElementById('status').innerHTML=`<div class="stars">${'★'.repeat(st)}${'☆'.repeat(3-st)}</div><b>Armonía perfecta</b> en ${moves} movimientos. ${lv<LV.length-1?'<button class="btn" id="nx" style="width:auto;margin-left:10px">Siguiente →</button>':''}`;const nx=document.getElementById('nx');if(nx)nx.onclick=()=>{lv++;build()};ui()}
+document.getElementById('peek').onclick=()=>{if(won)return;const keep=[...pos];pos=pos.map((_,i)=>i);place();setTimeout(()=>{pos=keep;place()},2000);moves+=3;ui()};
+document.getElementById('reset').onclick=()=>build();
+let ac;function tone(f,d){try{ac=ac||new AudioContext();const o=ac.createOscillator(),g=ac.createGain();o.type='sine';o.frequency.value=f;g.gain.value=.05;g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d);o.connect(g).connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}}
+function tick(k){tone(k===2?880:k===1?660:440,.12)}
+addEventListener('resize',()=>{size();tiles.forEach(t=>{t.el.style.width=cw+'px';t.el.style.height=ch+'px'});place(true)});
+build();
+</script>
+</body>
+</html>
